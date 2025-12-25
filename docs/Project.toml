@@ -1,0 +1,11 @@
+[deps]
+AnovaFun = "786f6bac-1c88-4ef5-b24a-5b341b5d6c78"
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+DocumenterTools = "35a29f4d-8980-5a13-9543-d66fff28ecb8"
+JuliaFormatter = "98e50ef6-434e-11e9-1051-2b60c6c9e899"
+
+[compat]
+Documenter = "1"
+DocumenterTools = "0.1"
+JuliaFormatter = "1.0"
