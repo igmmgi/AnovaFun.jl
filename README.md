@@ -119,7 +119,7 @@ result.table # for full anove table
 
 ```julia
 # Calculate estimated marginal means for all effects
-em = emmeans(result)
+result_emm = emmeans(result)
 ```
 
 | Effect                            | Level                    | N  | Mean   | SE   | Lower | Upper | error  |
@@ -138,20 +138,20 @@ em = emmeans(result)
 
 ```julia
 # Line plot showing the interaction
-plot_anova(em,
+plot_anova(result,
            x_grouping = :CurrentCongruency,
            y_grouping = :PreviousCongruency,
            plot_type = :line)
 
 # Bar plot with error bars
-plot_anova(em,
+plot_anova(result,
            x_grouping = :CurrentCongruency,
            y_grouping = :PreviousCongruency,
            plot_type = :bar,
            errorbars = :SE)
 
 # Raincloud plot showing data distributions
-plot_anova(em,
+plot_anova(result,
            x_grouping = :CurrentCongruency,
            y_grouping = :PreviousCongruency,
            plot_type = :raincloud)
@@ -163,7 +163,7 @@ plot_anova(em,
 #### Line Plot
 ```julia
 # Basic line plot
-plot_anova(em,
+plot_anova(result,
            x_grouping = :CurrentCongruency,
            y_grouping = :PreviousCongruency,
            plot_type = :line)
@@ -174,7 +174,7 @@ plot_anova(em,
 #### Bar Plot
 ```julia
 # Bar plot with error bars
-plot_anova(em,
+plot_anova(result,
            x_grouping = :CurrentCongruency,
            y_grouping = :PreviousCongruency,
            plot_type = :bar,
@@ -186,7 +186,7 @@ plot_anova(em,
 #### Raincloud Plot
 ```julia
 # Raincloud plot with distributions and points
-plot_anova(em,
+plot_anova(result,
            x_grouping = :CurrentCongruency,
            y_grouping = :PreviousCongruency,
            plot_type = :raincloud)
@@ -197,7 +197,7 @@ plot_anova(em,
 #### Box Plot
 ```julia
 # Box plot showing distributions
-plot_anova(em,
+plot_anova(result,
            x_grouping = :CurrentCongruency,
            y_grouping = :PreviousCongruency,
            plot_type = :boxplot)
@@ -208,7 +208,7 @@ plot_anova(em,
 #### Violin Plot
 ```julia
 # Violin plot with density estimates
-plot_anova(em,
+plot_anova(result,
            x_grouping = :CurrentCongruency,
            y_grouping = :PreviousCongruency,
            plot_type = :violin)
@@ -219,7 +219,7 @@ plot_anova(em,
 #### Custom Raincloud Plot with Connected Individual Points
 ```julia
 # Custom raincloud with connected individual points
-plot_anova(em,
+plot_anova(result,
            x_grouping = :CurrentCongruency,
            y_grouping = :PreviousCongruency,
            plot_type = :raincloud_custom_2x2,
@@ -230,7 +230,7 @@ plot_anova(em,
 #### Custom Raincloud Plot
 ```julia
 # Additional custom raincloud configuration
-plot_anova(em,
+plot_anova(result,
            x_grouping = :CurrentCongruency,
            y_grouping = :PreviousCongruency,
            plot_type = :raincloud_custom)
@@ -247,7 +247,7 @@ custom_theme = Theme(
     palette = (color = [:teal, :coral],)
 )
 
-fig = plot_anova(em,
+fig = plot_anova(result,
     x_grouping = :WF1,
     y_grouping = :WF2,
     plot_type = :raincloud_custom_2x2,
@@ -259,7 +259,7 @@ fig = plot_anova(em,
 
 ```julia
 # Using Makie's built-in ggplot2 theme
-fig = plot_anova(em,
+fig = plot_anova(result,
     x_grouping = :PreviousCongruency,
     y_grouping = :CurrentCongruency,
     plot_type = :line,
@@ -270,7 +270,7 @@ fig = plot_anova(em,
 
 
 ```julia
-presentation_theme = Theme(
+custom_theme = Theme(
     palette = (color = [:black, :grey],),
     Axis = (
         xlabelsize = 24,
@@ -285,11 +285,11 @@ presentation_theme = Theme(
     )
 )
 
-fig = plot_anova(em,
+fig = plot_anova(result,
     x_grouping = :PreviousCongruency,
     y_grouping = :CurrentCongruency,
     plot_type = :bar,
-    theme = presentation_theme,
+    theme = custom_theme,
     axis_title = "Congruency Sequence Effect",
     axis_xlabel = "Previous Trial",
     axis_ylabel = "Mean RT [ms]",

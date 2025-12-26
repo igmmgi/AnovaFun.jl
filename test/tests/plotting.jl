@@ -861,12 +861,9 @@ end
                     ylabelsize = 24,
                     xticklabelsize = 20,
                     yticklabelsize = 20,
-                    titlesize = 28 
+                    titlesize = 28,
                 ),
-                Legend = (
-                    labelsize = 18,
-                    titlesize = 20
-                )
+                Legend = (labelsize = 18, titlesize = 20),
             )
 
             fig = create_and_save_plot(
