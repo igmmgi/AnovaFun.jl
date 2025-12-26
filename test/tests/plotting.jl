@@ -473,6 +473,19 @@ end
             )
             @test fig isa Figure
         end
+
+        @testset "ggplot2 theme" begin
+            fig = create_and_save_plot(
+                "ggplot2 theme",
+                plot_anova,
+                em_example,
+                x_grouping = :PreviousCongruency,
+                y_grouping = :CurrentCongruency,
+                plot_type = :line,
+                theme = theme_ggplot2(),
+            )
+            @test fig isa Figure
+        end
     end
 
     # ============================================================================
@@ -836,6 +849,40 @@ end
                 x_grouping = :PreviousCongruency,
                 y_grouping = :CurrentCongruency,
                 plot_type = :bar,
+            )
+            @test fig isa Figure
+        end
+
+        @testset "Custom theme 1" begin
+            custom_theme = Theme(
+                palette = (color = [:black, :grey],),
+                Axis = (
+                    xlabelsize = 24,
+                    ylabelsize = 24,
+                    xticklabelsize = 20,
+                    yticklabelsize = 20,
+                    titlesize = 28 
+                ),
+                Legend = (
+                    labelsize = 18,
+                    titlesize = 20
+                )
+            )
+
+            fig = create_and_save_plot(
+                "Custom theme 1",
+                plot_anova,
+                em_example,
+                x_grouping = :PreviousCongruency,
+                y_grouping = :CurrentCongruency,
+                plot_type = :bar,
+                theme = custom_theme,
+                axis_title = "Congruency Sequence Effect",
+                axis_xlabel = "Previous Trial",
+                axis_ylabel = "Mean RT [ms]",
+                legend_title = "Current Trial",
+                legend_framevisible = false,
+                legend_order = [:Incongruent, :Congruent],
             )
             @test fig isa Figure
         end

@@ -168,7 +168,7 @@ plot_anova(em,
            y_grouping = :PreviousCongruency,
            plot_type = :line)
 ```
-![Line Plot Example](test/plot_anova_outputs/line/026_Example_2x2_data.png)
+<img src="test/plot_anova_outputs/line/026_Example_2x2_data.png" width="500">
 
 
 #### Bar Plot
@@ -180,7 +180,7 @@ plot_anova(em,
            plot_type = :bar,
            errorbars = :SE)
 ```
-![Bar Plot Example](test/plot_anova_outputs/bar/026_Example_2x2_data.png)
+<img src="test/plot_anova_outputs/bar/026_Example_2x2_data.png" width="500">
 
 
 #### Raincloud Plot
@@ -191,7 +191,7 @@ plot_anova(em,
            y_grouping = :PreviousCongruency,
            plot_type = :raincloud)
 ```
-![Raincloud Plot Example](test/plot_anova_outputs/raincloud/023_Example_2x2_data.png)
+<img src="test/plot_anova_outputs/raincloud/023_Example_2x2_data.png" width="500">
 
 
 #### Box Plot
@@ -202,7 +202,7 @@ plot_anova(em,
            y_grouping = :PreviousCongruency,
            plot_type = :boxplot)
 ```
-![Box Plot Example](test/plot_anova_outputs/boxplot/021_Example_2x2_data.png)
+<img src="test/plot_anova_outputs/boxplot/021_Example_2x2_data.png" width="500">
 
 
 #### Violin Plot
@@ -213,7 +213,7 @@ plot_anova(em,
            y_grouping = :PreviousCongruency,
            plot_type = :violin)
 ```
-![Violin Plot Example](test/plot_anova_outputs/violin/024_Example_2x2_data.png)
+<img src="test/plot_anova_outputs/violin/024_Example_2x2_data.png" width="500">
 
 
 #### Custom Raincloud Plot with Connected Individual Points
@@ -225,7 +225,7 @@ plot_anova(em,
            plot_type = :raincloud_custom_2x2,
            connected_points = true)
 ```
-![Custom Raincloud Plot with Connected Individual Points (2×2 Example)](test/plot_anova_outputs/raincloud_custom_2x2/005_Connected_points.png)
+<img src="test/plot_anova_outputs/raincloud_custom_2x2/005_Connected_points.png" width="500">
 
 #### Custom Raincloud Plot
 ```julia
@@ -235,32 +235,70 @@ plot_anova(em,
            y_grouping = :PreviousCongruency,
            plot_type = :raincloud_custom)
 ```
-![Custom Raincloud Plot (Example Data)](test/plot_anova_outputs/raincloud_custom/031_Example_2x2_data.png)
+<img src="test/plot_anova_outputs/raincloud_custom/031_Example_2x2_data.png" width="500">
 
 
-#### Custom Theme Example
+#### Custom Theme Examples
+
+##### Basic Custom Themes
 ```julia
-
+# Custom theme with teal/coral colors
 custom_theme = Theme(
-                palette = (color = [:red, :blue],),
-                Axis = (xlabelsize = 14, ylabelsize = 14),
-                Legend = (titlefontsize = 12,)
-            )
+    palette = (color = [:teal, :coral],)
+)
 
-fig = create_and_save_plot(
-                "Advanced customization with colors, labels, and legend",
-                plot_anova,
-                em_example,
-                x_grouping = :CurrentCongruency,
-                y_grouping = :PreviousCongruency,
-                plot_type = :raincloud_custom_2x2,
-                theme = custom_theme,
-                axis_xlabel = "Current Trial Type",
-                axis_ylabel = "Reaction Time (ms)",
-                legend_title = "Previous Trial",
-            )
+fig = plot_anova(em,
+    x_grouping = :WF1,
+    y_grouping = :WF2,
+    plot_type = :raincloud_custom_2x2,
+    theme = custom_theme
+)
 ```
-![Custom Theme Example](test/plot_anova_outputs/raincloud_custom_2x2/002_Custom_theme.png)
+<img src="test/plot_anova_outputs/raincloud_custom_2x2/002_Custom_theme.png" width="500">
+
+
+```julia
+# Using Makie's built-in ggplot2 theme
+fig = plot_anova(em,
+    x_grouping = :PreviousCongruency,
+    y_grouping = :CurrentCongruency,
+    plot_type = :line,
+    theme = theme_ggplot2()
+)
+```
+<img src="test/plot_anova_outputs/line/027_ggplot2_theme.png" width="500">
+
+
+```julia
+presentation_theme = Theme(
+    palette = (color = [:black, :grey],),
+    Axis = (
+        xlabelsize = 24,
+        ylabelsize = 24,
+        xticklabelsize = 20,
+        yticklabelsize = 20,
+        titlesize = 28 
+    ),
+    Legend = (
+        labelsize = 18,
+        titlesize = 20
+    )
+)
+
+fig = plot_anova(em,
+    x_grouping = :PreviousCongruency,
+    y_grouping = :CurrentCongruency,
+    plot_type = :bar,
+    theme = presentation_theme,
+    axis_title = "Congruency Sequence Effect",
+    axis_xlabel = "Previous Trial",
+    axis_ylabel = "Mean RT [ms]",
+    legend_title = "Current Trial",
+    legend_framevisible = false,
+    legend_order = [:Incongruent, :Congruent]
+)
+```
+<img src="test/plot_anova_outputs/bar/027_Custom_theme_1.png" width="500">
 
 
 ## Citation
