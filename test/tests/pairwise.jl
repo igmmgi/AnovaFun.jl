@@ -519,13 +519,13 @@
     end
 
     @testset "Pairwise error cases" begin
-        @testset "Invalid by effect" begin
+        @testset "Invalid simple effect" begin
             data = CSV.read(joinpath(TEST_DATA_DIR, "data_between_2.csv"), DataFrame)
             result = anova(data, :dv, :subject, between = [:BF1])
             em = emmeans(result)
 
-            # Test error when by effect doesn't exist (by expects Symbol)
-            @test_throws ArgumentError pairwise(em, by = :Nonexistent)
+            # Test error when simple effect doesn't exist (simple expects Symbol)
+            @test_throws ArgumentError pairwise(em, simple = :Nonexistent)
         end
 
         @testset "Mixed design interaction across between-subjects levels" begin

@@ -201,6 +201,13 @@ function pairwise_table(
         tf = TextTableFormat(; @text__no_vertical_lines)
     end
 
+    # Remove Context column if it's empty or all the same
+    if hasproperty(pw_table, :Context)
+        if all(isempty.(pw_table.Context)) || length(unique(pw_table.Context)) == 1
+            _remove_columns!(pw_table, [:Context])
+        end
+    end
+
     # Remove p_adj column if it's the same as p
     if all(result.table.p .== result.table.p_adj)
         _remove_columns!(pw_table, [:p_adj])
