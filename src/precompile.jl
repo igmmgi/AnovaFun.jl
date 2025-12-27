@@ -37,8 +37,6 @@ PrecompileTools.@compile_workload begin
     # Precompile pairwise function calls
     pairwise(em_within)
     pairwise(em_within, adjust = :bonferroni)
-    pairwise(em_within, adjust = :sidak)
-    pairwise(em_within_2x2, by = :WF1)
 
     # Precompile accessor functions
     factors(res_within)

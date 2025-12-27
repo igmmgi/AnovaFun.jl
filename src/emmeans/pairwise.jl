@@ -116,12 +116,6 @@ function _get_highest_order_effect(means::DataFrame)::String
     return factor_counts[1][1]
 end
 
-# Parse effect name to get factor symbols
-function _parse_effect_name(effect::String)::Vector{Symbol}
-    effect == "Grand Mean" && return Symbol[]
-    return Symbol.(strip.(split(effect, " × ")))
-end
-
 # Mode 1: All pairwise comparisons across all cell means
 function _process_all_pairwise!(
     results::DataFrame,
