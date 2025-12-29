@@ -199,3 +199,80 @@ function _plot_to_panel!(
         error("Unknown plot type: $plot_type")
     end
 end
+
+"""
+    plot_sample_size(result::SampleSizeResult; target_power=nothing, kwargs...)
+
+Plot power curves for sample size analysis.
+
+Shows how power changes with sample size for each effect. 
+Includes a horizontal line at the target power and a vertical line at the recommended N.
+
+# Arguments
+- `result::SampleSizeResult`: Result from `sample_size()`
+- `target_power::Union{Real, Nothing}`: Target power level (0-100). If `nothing`, inferred from minimum power in result
+- `figure_size::Tuple{Int,Int}`: Figure size in pixels (default: (800, 600))
+- `theme::Union{Theme, Nothing}`: Makie theme for customization
+
+# Examples
+```julia
+result = sample_size(80, ...)
+plot_sample_size(result)  # Basic plot
+plot_sample_size(result, figure_size=(1000, 700))  # Custom size
+```
+"""
+function plot_sample_size(result::SampleSizeResult; figure_size::Tuple{Int,Int}=(800, 600), theme::Union{Theme, Nothing}=nothing, kwargs...)
+    
+    # Get effect names from results columns (excluding n)
+    effect_cols = [col for col in names(result.results) if col != "n"]
+    
+    # Apply theme if provided
+    if !isnothing(theme)
+        with_theme(theme) do
+            _create_sample_size_plot(result, result.target_power, effect_cols, figure_size)
+        end
+    else
+        _create_sample_size_plot(result, result.target_power, effect_cols, figure_size)
+    end
+end
+
+function _create_sample_size_plot(result::SampleSizeResult, target_power, effect_cols, figure_size)
+    # Create figure with multiple rows (one per effect)
+    n_effects = length(effect_cols)
+    fig = Figure(size=figure_size)
+    
+    # Create subplot for each effect
+    for (i, effect) in enumerate(effect_cols)
+
+        ax = Axis(fig[i, 1],
+            xlabel = i == n_effects ? "Sample Size (n)" : "",
+            ylabel = "Power (%)",
+            title = effect
+        )
+        
+        # Plot power curve for this effect
+        n_values = result.results.n
+        power_values = result.results[!, effect]
+        lines!(ax, n_values, power_values, linewidth=2.5, color=:blue)
+        
+        # Add horizontal line at target power
+        hlines!(ax, [target_power], color=:red, linestyle=:dash, linewidth=1.5, alpha=0.7)
+        
+        # Find the first N where this effect reaches target power
+        effect_recommended_n = findfirst(power_values .>= target_power)
+        if !isnothing(effect_recommended_n)
+            effect_n_value = n_values[effect_recommended_n]
+            vlines!(ax, [effect_n_value], color=:green, linestyle=:dash, linewidth=1.5, alpha=0.7)
+            text!(ax, effect_n_value, 5, text="n = $effect_n_value", fontsize=10, align=(:center, :bottom))
+        end
+        
+        # Set y-axis limits to 0-100
+        ylims!(ax, 0, 100)
+    end
+    
+    # Add overall title
+    Label(fig[0, 1], "Power Analysis", fontsize=16, font=:bold)
+    
+    return fig
+end
+

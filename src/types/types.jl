@@ -413,3 +413,100 @@ Base.show(io::IO, ::MIME"text/plain", pw::PairwiseResult) = pairwise_table(pw)
 
 # Compact printing (for arrays, etc.)
 Base.show(io::IO, pw::PairwiseResult) = print(io, "PairwiseResult")
+
+
+"""
+    PowerResult
+
+Results from a power analysis.
+
+# Fields
+- `power::DataFrame`: Power estimates for each effect with columns: n, Effect, Power, EffectSize
+- `between::Union{Dict{Symbol, Vector{String}}, Nothing}`: Between-subjects factors and their levels
+- `within::Union{Dict{Symbol, Vector{String}}, Nothing}`: Within-subjects factors and their levels
+- `n_sims::Union{Int, Nothing}`: Number of simulations (if simulation method)
+- `alpha::Float64`: Significance level used
+
+# Examples
+```julia
+result = power_analysis(40,
+                        between=Dict(:voice => [:human, :robot]),
+                        within=Dict(:emotion => [:cheerful, :sad]),
+                        mu=[1.03, 1.41, 0.98, 1.01],
+                        sd=1.03,
+                        r=0.8)
+result.power        # Access power estimates and effect sizes DataFrame
+result.power.n      # Access sample size from the DataFrame
+result.between      # Access between-subjects factors
+result.within       # Access within-subjects factors
+```
+"""
+struct PowerResult
+    between::Union{Dict{Symbol, Vector{String}}, Nothing}
+    within::Union{Dict{Symbol, Vector{String}}, Nothing}
+    power::DataFrame
+    n_sims::Union{Int, Nothing}
+    alpha::Float64
+end
+
+# Custom show method for PowerResult
+function Base.show(io::IO, ::MIME"text/plain", pr::PowerResult)
+    println(io, "Power Analysis Results")
+    println(io, "  N: $(first(pr.power.n))")
+    
+    # Display design information
+    if !isnothing(pr.between) && !isempty(pr.between)
+        between_str = join(["$(k)($(join(v, ", ")))" for (k, v) in pr.between], ", ")
+        println(io, "  Between: $between_str")
+    end
+    if !isnothing(pr.within) && !isempty(pr.within)
+        within_str = join(["$(k)($(join(v, ", ")))" for (k, v) in pr.within], ", ")
+        println(io, "  Within: $within_str")
+    end
+    if !isnothing(pr.n_sims)
+        println(io, "  Simulations: $(pr.n_sims)")
+    end
+    println(io, "  Alpha: $(pr.alpha)")
+    println(io)
+    PrettyTables.pretty_table(io, pr.power)
+end
+
+Base.show(io::IO, pr::PowerResult) = print(io, "PowerResult")
+
+"""
+    SampleSizeResult
+
+Results from a sample size calculation.
+
+# Fields
+- `power::DataFrame`: Power estimates for each effect at the recommended sample size (columns: n, Effect, Power, EffectSize)
+- `results::DataFrame`: DataFrame with columns `n` and one column per effect/interaction showing power values for each tested sample size
+
+# Examples
+```julia
+result = sample_size(80,
+                     within=Dict(:factor1 => [1, 2], :factor2 => [1, 2]),
+                     mu=[1.0, 1.0, 1.0, 2.0],
+                     sd=1.0,
+                     r=0.5)
+result.power        # Recommended sample size and power for each effect
+result.results      # Power for all tested sample sizes
+```
+"""
+struct SampleSizeResult
+    power::DataFrame
+    results::DataFrame
+    target_power::Float64
+end
+
+# Custom show method for SampleSizeResult
+function Base.show(io::IO, ::MIME"text/plain", sr::SampleSizeResult)
+    recommended_n = first(sr.power.n)
+    println(io, "Sample Size Calculation Results")
+    println(io, "  Recommended N: $recommended_n")
+    println(io)
+    println(io, "Power at recommended N:")
+    PrettyTables.pretty_table(io, sr.power)
+end
+
+Base.show(io::IO, sr::SampleSizeResult) = print(io, "SampleSizeResult(n=$(first(sr.power.n)))")

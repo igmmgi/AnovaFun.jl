@@ -11,16 +11,17 @@ currently use. IT IS PROBABLY (DEFINITELY) MISSING SOMETHING (LOTS!) IMPORTANT!
 module AnovaFun
 
 using DataFrames
-using Distributions: FDist, TDist, Chisq, cdf, quantile
+using Distributions: FDist, TDist, Chisq, MvNormal, cdf, quantile
 using GLM
 using LinearAlgebra
 using Logging
+using Random
 
 # Import Makie - backends are loaded/activated by users
 using Makie
 using PrettyTables
 using Printf
-using Statistics: mean, var, median, cov, std, quantile
+using Statistics: mean, var, median, cov, std, quantile, cor
 using StatsModels
 
 # main functions user functions
@@ -28,14 +29,17 @@ export anova, emmeans, pairwise, check_homogeneity, sphericity_check, sphericity
 export p, f, sphericity, fstat
 export m, ci, m_ci
 export anova_table, emmeans_table, pairwise_table
-export plot_anova
+export plot_anova, plot_sample_size
 
 # types
-export AnovaResult, DesignInfo, EmmeansResult, PairwiseResult
+export AnovaResult, DesignInfo, EmmeansResult, PairwiseResult, PowerResult, SampleSizeResult
 
 # accessor/helper methods
 export factors, between_factors, within_factors, n_id, n_effects, design_type
 export data, dv, id, model
+
+# power analysis
+export simulate_data, power_analysis, sample_size, within_correlation_matrix
 
 # TODO: is there a better way to do this? But for now, seems to work fine,
 # and as it is such a small dataset other solutions seem overkill!
@@ -59,6 +63,11 @@ include("anova/sphericity.jl")
 # Post-hoc analysis
 include("emmeans/emmeans.jl")
 include("emmeans/pairwise.jl")
+
+# Power analysis
+include("power/simulate.jl")
+include("power/power.jl")
+include("power/sample_size.jl")
 
 # Output formatting
 include("output/report.jl")
