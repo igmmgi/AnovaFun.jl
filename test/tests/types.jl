@@ -10,9 +10,9 @@
         @test n_id(result) > 0
         @test n_effects(result) >= 1
         @test design_type(result) == :between
-        @test AnovaFun.data(result) isa DataFrame
-        @test dv(result) == :dv
-        @test id(result) == :subject
+        @test result.data isa DataFrame
+        @test result.dv == :dv
+        @test result.id == :subject
         @test !isnothing(model(result))
     end
 
@@ -110,19 +110,19 @@
         wf = [:WF1]
         n = 10
 
-        between_d = AnovaFun.between_design(bf, n)
+        between_d = DesignInfo(:between, bf, Symbol[], n)
         @test between_d.type == :between
         @test between_d.between_factors == bf
         @test isempty(between_d.within_factors)
         @test between_d.n_id == n
-
-        within_d = AnovaFun.within_design(wf, n)
+        
+        within_d = DesignInfo(:within, Symbol[], wf, n)
         @test within_d.type == :within
         @test isempty(within_d.between_factors)
         @test within_d.within_factors == wf
         @test within_d.n_id == n
-
-        mixed_d = AnovaFun.mixed_design(bf, wf, n)
+        
+        mixed_d = DesignInfo(:mixed, bf, wf, n)
         @test mixed_d.type == :mixed
         @test mixed_d.between_factors == bf
         @test mixed_d.within_factors == wf

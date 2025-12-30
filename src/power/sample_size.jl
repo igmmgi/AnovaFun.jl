@@ -42,7 +42,7 @@ result = sample_size(target_power=80,  # 80% power
                      mu=[1.0, 1.0, 1.0, 2.0], 
                      sd=1.0, 
                      r=0.5, 
-                     n_sims=2000,
+                     n_sims=100,
                      method=:binary)
 
 # Sequential search with larger step size (faster, coarser)
@@ -73,26 +73,26 @@ function sample_size(;
     n_anchors::Int = 10,
 )
     
-    target_power <= 0 || target_power >= 100 && throw(ArgumentError("invalid target_power"))
+    (target_power <= 0 || target_power >= 100) && throw(ArgumentError("invalid target_power"))
     method ∉ [:binary, :sequential] && throw(ArgumentError("Unknown method: $method"))
     
     # Extract factor names and convert labels to strings
     between_factors, within_factors, labelnames, factor_levels = _process_factors(within, between)
     
-    # Convert mu vector to dict with cell names
-    cells = _generate_cell_combinations(between_factors, within_factors, factor_levels, labelnames)
-    n_cells = length(cells)
-    mu = mu isa Number ? fill(Float64(mu), n_cells) : Float64.(mu)
-    
-    if length(mu) != n_cells
-        throw(ArgumentError("Number of means ($(length(mu))) doesn't match design cells ($n_cells)"))
-    end
-    
-    means_dict = Dict(zip(cells, mu))
+    mu_vec, sd_vec, r_vec, _ = _normalize_sim_inputs(
+        between_factors,
+        within_factors,
+        mu,
+        sd,
+        r,
+        factor_levels,
+        labelnames,
+    )
+
     if method == :binary
-        return _sample_size_binary(between_factors, within_factors, means_dict, sd, r, labelnames, cells, target_power, n_sims, alpha, min_n, max_n, n_anchors, factor_levels)
+        return _sample_size_binary(between_factors, within_factors, mu_vec, sd_vec, r_vec, labelnames, target_power, n_sims, alpha, min_n, max_n, n_anchors, factor_levels)
     elseif method == :sequential
-        return _sample_size_sequential(between_factors, within_factors, means_dict, sd, r, labelnames, cells, target_power, n_sims, alpha, min_n, max_n, step, factor_levels)
+        return _sample_size_sequential(between_factors, within_factors, mu_vec, sd_vec, r_vec, labelnames, target_power, n_sims, alpha, min_n, max_n, step, factor_levels)
     end
 end
 
@@ -122,7 +122,7 @@ function _build_power_row(n::Int, sorted_power_df::DataFrame)
 end
 
 """
-    _sample_size_binary(between_factors, within_factors, means_dict, sd, r, labelnames, cells, target_power, n_sims, alpha, min_n, max_n, n_anchors, factor_levels)
+    _sample_size_binary(between_factors, within_factors, mu_vec, sd_vec, r_vec, labelnames, target_power, n_sims, alpha, min_n, max_n, n_anchors, factor_levels)
 
 Binary search for sample size with independent search per effect.
 Searches for the n needed for each effect separately, but caches all results
@@ -131,11 +131,10 @@ so the final DataFrame includes power values for all effects at all tested n val
 function _sample_size_binary(
     between_factors,
     within_factors,
-    means_dict,
-    sd,
-    r,
+    mu_vec::Vector{Float64},
+    sd_vec::Vector{Float64},
+    r_vec::Union{Vector{Float64}, Nothing},
     labelnames,
-    cells::Vector{String},
     target_power::Real,
     n_sims::Int,
     alpha::Float64,
@@ -144,24 +143,18 @@ function _sample_size_binary(
     n_anchors::Int,
     factor_levels::Dict{Symbol, Int},
 )
-    # Convert parameters once (they don't change with n)
-    mu_vec = [means_dict[cell] for cell in cells]
-    sd_vec = sd isa Float64 ? fill(sd, length(cells)) : sd
     between_dict = isempty(between_factors) ? nothing : Dict(factor => labelnames[factor] for factor in between_factors)
     within_dict = isempty(within_factors) ? nothing : Dict(factor => labelnames[factor] for factor in within_factors)
     
     # Cache power results by n (per-group n) to avoid re-running simulations
-    power_cache = Dict{Int, Any}()  # Will store PowerResult objects
-    
-    # Calculate number of between-subjects groups for conversion
-    n_between_groups = isempty(between_factors) ? 1 : prod(factor_levels[f] for f in between_factors)
+    power_cache = Dict{Int, PowerResult}()
     
     # Helper function to run or retrieve simulation
     # n is per-group n, convert to total n for simulation
     function get_power_at_n(n_per_group::Int)
         if !haskey(power_cache, n_per_group)
-            total_n = _calculate_total_n(n_per_group, between_factors, within_factors, factor_levels)
-            power_result = _power_simulation(total_n, between_factors, within_factors, mu_vec, sd_vec, r, n_sims, alpha, between_dict, within_dict, labelnames, factor_levels)
+            total_n = _calculate_total_n(n_per_group, between_factors, factor_levels)
+            power_result = _power_simulation(total_n, between_factors, within_factors, mu_vec, sd_vec, r_vec, n_sims, alpha, false, between_dict, within_dict, labelnames, factor_levels)
             # Update power_df to show per-group n instead of total n
             power_result.power.n .= n_per_group
             power_cache[n_per_group] = power_result
@@ -178,11 +171,7 @@ function _sample_size_binary(
     @info "Pre-search: Testing $(length(anchor_points)) anchor points (n_sims=$n_sims)"
     for test_n_per_group in anchor_points
         @info "  Anchor point: n=$test_n_per_group (per group)"
-        total_n = _calculate_total_n(test_n_per_group, between_factors, within_factors, factor_levels)
-        power_result = _power_simulation(total_n, between_factors, within_factors, mu_vec, sd_vec, r, n_sims, alpha, between_dict, within_dict, labelnames, factor_levels)
-        # Update power_df to show per-group n instead of total n
-        power_result.power.n .= test_n_per_group
-        power_cache[test_n_per_group] = power_result
+        get_power_at_n(test_n_per_group)
     end
     
     # Get effect names from first simulation
@@ -310,7 +299,7 @@ end
 
 
 """
-    _sample_size_sequential(between_factors, within_factors, means_dict, sd, r, labelnames, cells, target_power, n_sims, alpha, min_n, max_n, step, factor_levels)
+    _sample_size_sequential(between_factors, within_factors, mu_vec, sd_vec, r_vec, labelnames, target_power, n_sims, alpha, min_n, max_n, step, factor_levels)
 
 Sequential search for sample size from min_n to max_n with configurable step size 
 
@@ -323,11 +312,10 @@ For each sample size from min_n to max_n:
 function _sample_size_sequential(
     between_factors,
     within_factors,
-    means_dict,
-    sd,
-    r,
+    mu_vec::Vector{Float64},
+    sd_vec::Vector{Float64},
+    r_vec::Union{Vector{Float64}, Nothing},
     labelnames,
-    cells::Vector{String},
     target_power::Real,
     n_sims::Int,
     alpha::Float64,
@@ -340,9 +328,6 @@ function _sample_size_sequential(
     best_n = nothing
     best_power_df = nothing
     
-    # Convert parameters once (they don't change with n)
-    mu_vec = [means_dict[cell] for cell in cells]
-    sd_vec = sd isa Float64 ? fill(sd, length(cells)) : sd
     between_dict = isempty(between_factors) ? nothing : Dict(factor => labelnames[factor] for factor in between_factors)
     within_dict = isempty(within_factors) ? nothing : Dict(factor => labelnames[factor] for factor in within_factors)
     
@@ -353,8 +338,8 @@ function _sample_size_sequential(
         @info "Sequential search: Testing sample size $test_n_per_group (per group, step=$step)"
         
         # Calculate power (convert per-group n to total n)
-        total_n = _calculate_total_n(test_n_per_group, between_factors, within_factors, factor_levels)
-        power_result = _power_simulation(total_n, between_factors, within_factors, mu_vec, sd_vec, r, n_sims, alpha, between_dict, within_dict, labelnames, factor_levels)
+        total_n = _calculate_total_n(test_n_per_group, between_factors, factor_levels)
+        power_result = _power_simulation(total_n, between_factors, within_factors, mu_vec, sd_vec, r_vec, n_sims, alpha, false, between_dict, within_dict, labelnames, factor_levels)
         # Update power_df to show per-group n instead of total n
         power_result.power.n .= test_n_per_group
         last_power_result = power_result  # Cache for potential reuse

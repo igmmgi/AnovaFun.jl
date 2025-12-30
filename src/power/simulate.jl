@@ -1,12 +1,16 @@
 """
-    _calculate_total_n(n_per_group, between_factors, within_factors, factor_levels)
+    _calculate_total_n(n_per_group, between_factors, factor_levels)
 
 Calculate total number of subjects from per-group n.
 For between-subjects designs: n_per_group * number_of_between_groups
 For within-subjects designs: n_per_group (no change, n is already total)
 For mixed designs: n_per_group * number_of_between_groups
 """
-function _calculate_total_n(n_per_group::Int, between_factors::Vector{Symbol}, within_factors::Vector{Symbol}, factor_levels::Dict{Symbol, Int})
+function _calculate_total_n(
+    n_per_group::Int,
+    between_factors::Vector{Symbol},
+    factor_levels::Dict{Symbol, Int},
+)
     if isempty(between_factors) # Pure within-subjects: n is total subjects
         return n_per_group
     else # Between-subjects or mixed: n is per group, multiply by number of between-subjects groups
@@ -83,6 +87,51 @@ function _generate_cell_combinations(
     end
     
     return cells
+end
+
+"""
+    _normalize_sim_inputs(between_factors, within_factors, mu, sd, r, factor_levels, labelnames)
+
+Normalize `mu`, `sd`, and `r` to Float64 vectors matching the design cell order, and build
+`cell_params` (`Dict{String, Vector{Float64}}`) for fast simulation.
+
+Returns `(mu_vec, sd_vec, r_vec, cell_params)`.
+"""
+function _normalize_sim_inputs(
+    between_factors::Vector{Symbol},
+    within_factors::Vector{Symbol},
+    mu::Union{Real, Vector{<:Real}},
+    sd::Union{Real, Vector{<:Real}},
+    r::Union{Real, Vector{<:Real}, Nothing},
+    factor_levels::Dict{Symbol, Int},
+    labelnames::Dict{Symbol, Vector{String}},
+)
+    cells = _generate_cell_combinations(between_factors, within_factors, factor_levels, labelnames)
+    n_cells = length(cells)
+
+    mu_vec = mu isa Number ? fill(Float64(mu), n_cells) : Float64.(mu)
+    sd_vec = sd isa Number ? fill(Float64(sd), n_cells) : Float64.(sd)
+
+    length(mu_vec) == n_cells || throw(ArgumentError("Number of means ($(length(mu_vec))) doesn't match design cells ($n_cells)"))
+    length(sd_vec) == n_cells || throw(ArgumentError("Number of sd values ($(length(sd_vec))) doesn't match design cells ($n_cells)"))
+
+    r_vec = if !isempty(within_factors)
+        n_within = length(_generate_cell_combinations(Symbol[], within_factors, factor_levels, labelnames))
+        n_cors_needed = n_within * (n_within - 1) ÷ 2
+        if isnothing(r)
+            fill(0.0, n_cors_needed)
+        elseif r isa Number
+            fill(Float64(r), n_cors_needed)
+        else
+            length(r) == n_cors_needed || throw(ArgumentError("r vector must have length n_within*(n_within-1)/2 = $n_cors_needed, got $(length(r))"))
+            Float64.(r)
+        end
+    else
+        nothing
+    end
+
+    cell_params = Dict(cell => [mu_vec[i], sd_vec[i]] for (i, cell) in enumerate(cells))
+    return mu_vec, sd_vec, r_vec, cell_params
 end
 
 """
@@ -366,39 +415,21 @@ function simulate_data(
     between_factors, within_factors, labelnames, factor_levels = _process_factors(within, between)
     
     # Convert per-group n to total n for between-subjects designs
-    total_n = _calculate_total_n(n, between_factors, within_factors, factor_levels)
+    total_n = _calculate_total_n(n, between_factors, factor_levels)
     
-    # Generate cell combinations and validate parameter lengths
-    cells = _generate_cell_combinations(between_factors, within_factors, factor_levels, labelnames)
-    
-    n_cells = length(cells)
-    mu = mu isa Number ? fill(Float64(mu), n_cells) : Float64.(mu)
-    sd = sd isa Number ? fill(Float64(sd), n_cells) : Float64.(sd)
-
-    length(mu) == n_cells || throw(ArgumentError("Number of means ($(length(mu))) doesn't match design cells ($n_cells)"))
-    length(sd) == n_cells || throw(ArgumentError("Number of sd values ($(length(sd))) doesn't match design cells ($n_cells)"))
-    
-    # Normalize r to vector 
-    r = if !isempty(within_factors)
-        n_within = length(_generate_cell_combinations(Symbol[], within_factors, factor_levels, labelnames))
-        n_cors_needed = n_within * (n_within - 1) ÷ 2
-        if isnothing(r)
-            fill(0.0, n_cors_needed)
-        elseif r isa Number
-            fill(Float64(r), n_cors_needed)
-        else
-            length(r) != n_cors_needed && throw(ArgumentError("r vector must have length n_within*(n_within-1)/2 = $n_cors_needed, got $(length(r))"))
-            Float64.(r)
-        end
-    else
-        nothing  # Not used for pure between-subjects designs
-    end
-    
-    # Create dictionary mapping cell names to [mean, sd] pairs
-    cell_params = Dict(cell => [mu[i], sd[i]] for (i, cell) in enumerate(cells))
+    # Normalize parameters once and build cell_params
+    _, _, r_vec, cell_params = _normalize_sim_inputs(
+        between_factors,
+        within_factors,
+        mu,
+        sd,
+        r,
+        factor_levels,
+        labelnames,
+    )
     
     # Generate and return data
-    return _generate_data(total_n, between_factors, within_factors, cell_params, r, labelnames, factor_levels)
+    return _generate_data(total_n, between_factors, within_factors, cell_params, r_vec, labelnames, factor_levels)
 end
 
 """

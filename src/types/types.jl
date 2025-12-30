@@ -13,10 +13,10 @@ Stores info about the ANOVA design.
 # Examples
 ```julia
 result = anova(data, :dv, :id, between=[:group])
-design_type(result)  # Returns :between
-between_factors(result)  # Returns [:group]
+design_type(result)     # Returns :between
+between_factors(result) # Returns [:group]
 within_factors(result)  # Returns []
-n_id(result)  # Returns number of subjects
+n_id(result)            # Returns number of subjects
 ```
 """
 struct DesignInfo
@@ -25,12 +25,6 @@ struct DesignInfo
     within_factors::Vector{Symbol}
     n_id::Int
 end
-
-# Simple factory functions for creating design info
-between_design(factors::Vector{Symbol}, n::Int) = DesignInfo(:between, factors, Symbol[], n)
-within_design(factors::Vector{Symbol}, n::Int) = DesignInfo(:within, Symbol[], factors, n)
-mixed_design(between::Vector{Symbol}, within::Vector{Symbol}, n::Int) =
-    DesignInfo(:mixed, between, within, n)
 
 function _validate_factors(factors::AbstractVector{Symbol}, design_type::String)
     isempty(factors) &&
@@ -75,10 +69,12 @@ Use these functions to extract information from an `AnovaResult`:
 - `n_id(result)`: Get number of subjects
 - `n_effects(result)`: Get number of effects (excluding Intercept)
 - `design_type(result)`: Get design type (`:between`, `:within`, or `:mixed`)
-- `data(result)`: Get original data
-- `dv(result)`: Get dependent variable name
-- `id(result)`: Get subject identifier name
 - `model(result)`: Get fitted model
+
+Access data directly using fields:
+- `result.data`: Get original data
+- `result.dv`: Get dependent variable name
+- `result.id`: Get subject identifier name
 
 # Examples
 ```julia
@@ -217,63 +213,6 @@ design_type(result)  # Returns :mixed
 ```
 """
 design_type(aov::AnovaResult) = aov.design.type
-
-"""
-    data(result::AnovaResult)
-
-Get the original data used for the ANOVA.
-
-# Arguments
-- `result::AnovaResult`: ANOVA result object
-
-# Returns
-The original `DataFrame` used for the analysis.
-
-# Examples
-```julia
-result = anova(data, :dv, :id, within=[:time])
-original_data = data(result)
-```
-"""
-data(aov::AnovaResult) = aov.data
-
-"""
-    dv(result::AnovaResult)
-
-Get the dependent variable name.
-
-# Arguments
-- `result::AnovaResult`: ANOVA result object
-
-# Returns
-A `Symbol` representing the dependent variable column name.
-
-# Examples
-```julia
-result = anova(data, :dv, :id, within=[:time])
-dv(result)  # Returns :dv
-```
-"""
-dv(aov::AnovaResult) = aov.dv
-
-"""
-    id(result::AnovaResult)
-
-Get the subject identifier name.
-
-# Arguments
-- `result::AnovaResult`: ANOVA result object
-
-# Returns
-A `Symbol` representing the subject identifier column name.
-
-# Examples
-```julia
-result = anova(data, :dv, :id, within=[:time])
-id(result)  # Returns :id
-```
-"""
-id(aov::AnovaResult) = aov.id
 
 # Model accessor methods
 """

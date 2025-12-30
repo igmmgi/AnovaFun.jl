@@ -45,9 +45,9 @@ PrecompileTools.@compile_workload begin
     n_id(res_within)
     n_effects(res_within)
     design_type(res_within)
-    data(res_within)
-    dv(res_within)
-    id(res_within)
+    res_within.data
+    res_within.dv
+    res_within.id
     model(res_within)
 
     # Precompile table functions
