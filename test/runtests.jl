@@ -2,6 +2,7 @@ using Test
 
 # Import the package
 using AnovaFun
+using CairoMakie
 CairoMakie.activate!() # is this needed for GitHub CI?
 
 # Include shared test utilities first
