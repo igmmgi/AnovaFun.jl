@@ -455,7 +455,7 @@ function _validate_plot_parameters(
     plot_type ∉ allowed_plot_types &&
         throw(ArgumentError("plot_type must be one of: $(allowed_plot_types)"))
 
-    allowed_errorbars = [:none, :SE, :CI, :withinSE, :withinCI]
+    allowed_errorbars = [:none, :SD, :SE, :CI, :withinSE, :withinCI]
     errorbars ∉ allowed_errorbars &&
         throw(ArgumentError("errorbars must be one of: $(allowed_errorbars)"))
 

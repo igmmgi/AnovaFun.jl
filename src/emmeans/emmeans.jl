@@ -14,7 +14,7 @@ This method uses the data stored in the result object.
 
 # Returns
 An `EmmeansResult` object containing:
-- `means::DataFrame`: Marginal means table with columns Effect, Level, N, Mean, SE, Lower, Upper
+- `means::DataFrame`: Marginal means table with columns Effect, Level, N, Mean, SD, SE, Lower, Upper
 - `anova::AnovaResult`: The original ANOVA result object
 - `level::Float64`: Confidence level used for intervals
 
@@ -63,6 +63,7 @@ function emmeans(
         Level = String[],
         N = Int[],
         Mean = Float64[],
+        SD = Float64[],
         SE = Float64[],
         Lower = Float64[],
         Upper = Float64[],
@@ -107,7 +108,27 @@ function emmeans(
             [f for f in all_factors_ordered if f in effect_factors]
         end
 
-        for group in grouped
+        # Sort groups by factor level order to match user-specified order
+        # Get unique levels for each factor in order of first appearance
+        level_orders = Dict{Symbol, Vector{Any}}()
+        for factor in effect_factors
+            unique_levels = unique(result.data[!, factor])
+            level_orders[factor] = unique_levels
+        end
+        
+        # Sort groups based on level order (lexicographic order across factors)
+        sorted_groups = collect(grouped)
+        if length(effect_factors) == 1
+            # Single factor: sort by level order
+            factor = effect_factors[1]
+            level_order = level_orders[factor]
+            sort!(sorted_groups, by = g -> findfirst(==(g[1, factor]), level_order))
+        else
+            # Multiple factors: sort lexicographically by factor order
+            sort!(sorted_groups, by = g -> [findfirst(==(g[1, f]), level_orders[f]) for f in effect_factors])
+        end
+
+        for group in sorted_groups
             level_parts = [string(group[1, f]) for f in factor_order_for_level]
             level_str = join(level_parts, ", ")
 
@@ -124,6 +145,9 @@ function emmeans(
             cell_mean = mean(id_means[!, result.dv])
             n_id = nrow(id_means)
             n_observations = nrow(group)
+            
+            # Compute SD (standard deviation of subject-level means)
+            cell_sd = n_id > 1 ? std(id_means[!, result.dv]) : 0.0
 
             # Compute SE, df_error, and MSE
             se, df_error, _, _ =
@@ -140,6 +164,7 @@ function emmeans(
                     Level = level_str,
                     N = n_id,
                     Mean = cell_mean,
+                    SD = cell_sd,
                     SE = se,
                     Lower = cell_mean - margin,
                     Upper = cell_mean + margin,
@@ -156,6 +181,7 @@ function _grand_mean(data::DataFrame, dv::Symbol, n_id::Int, level::Float64)
 
     grand_mean = mean(data[!, dv])
     grand_var = var(data[!, dv])
+    grand_sd = sqrt(grand_var)
     grand_se = sqrt(grand_var / n_id)
     df_grand = n_id - 1
 
@@ -169,6 +195,7 @@ function _grand_mean(data::DataFrame, dv::Symbol, n_id::Int, level::Float64)
         Level = "Overall",
         N = n_id,
         Mean = grand_mean,
+        SD = grand_sd,
         SE = grand_se,
         Lower = grand_mean - margin_grand,
         Upper = grand_mean + margin_grand,

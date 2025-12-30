@@ -180,12 +180,20 @@ Adds an `error` column to `result.means` with the symmetrical distance from the 
 function errorbar_limits!(result::EmmeansResult, errorbars::Symbol)
     means_df = result.means
 
-    allowed_errorbars = [:none, :SE, :CI, :withinSE, :withinCI]
+    allowed_errorbars = [:none, :SD, :SE, :CI, :withinSE, :withinCI]
     errorbars ∉ allowed_errorbars &&
         throw(ArgumentError("errorbars must be one of: $(allowed_errorbars)"))
 
+    # For :SD, use the SD column
+    if errorbars == :SD
+        hasproperty(means_df, :SD) || throw(ArgumentError("SD column not found in emmeans result. Make sure you're using a recent version of AnovaFun."))
+        means_df[!, :error] = means_df.SD
+    # For :SE, use the SE column
+    elseif errorbars == :SE
+        hasproperty(means_df, :SE) || throw(ArgumentError("SE column not found in emmeans result."))
+        means_df[!, :error] = means_df.SE
     # For :CI, compute error from Lower/Upper: (Upper - Lower) / 2
-    if errorbars == :CI
+    elseif errorbars == :CI
         means_df[!, :error] = (means_df.Upper .- means_df.Lower) ./ 2
         # For within-participant error bars, need raw data
     elseif errorbars ∈ [:withinSE, :withinCI]

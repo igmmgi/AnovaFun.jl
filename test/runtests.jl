@@ -40,6 +40,11 @@ println("="^40)
     # Utils Tests
     include("tests/utils.jl")
 
+    # Power Analysis Tests
+    include("tests/power.jl")
+    include("tests/simulate.jl")
+    include("tests/sample_size.jl")
+
     # Plotting Tests
     include("tests/plotting.jl")
 end

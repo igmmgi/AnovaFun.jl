@@ -218,7 +218,6 @@ Includes a horizontal line at the target power and a vertical line at the recomm
 ```julia
 result = sample_size(80, ...)
 plot_sample_size(result)  # Basic plot
-plot_sample_size(result, figure_size=(1000, 700))  # Custom size
 ```
 """
 function plot_sample_size(result::SampleSizeResult; figure_size::Tuple{Int,Int}=(800, 600), theme::Union{Theme, Nothing}=nothing, kwargs...)

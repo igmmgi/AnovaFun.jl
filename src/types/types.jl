@@ -349,6 +349,7 @@ Results from estimated marginal means computation.
   - `Level`: Level combination (e.g., "T1" or "T1, Condition1")
   - `N`: Number of subjects contributing to this mean
   - `Mean`: Estimated marginal mean
+  - `SD`: Standard deviation
   - `SE`: Standard error of the mean
   - `Lower`: Lower bound of confidence interval
   - `Upper`: Upper bound of confidence interval

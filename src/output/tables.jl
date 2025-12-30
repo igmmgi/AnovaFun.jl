@@ -144,7 +144,7 @@ function emmeans_table(
     end
 
     # Format decimal places
-    emmeans_format_map = Dict(:Mean => 2, :SE => 2, :Lower => 2, :Upper => 2)
+    emmeans_format_map = Dict(:Mean => 2, :SD => 2, :SE => 2, :Lower => 2, :Upper => 2)
     _format_columns!(mm_table, emmeans_format_map)
 
     pretty_table(
