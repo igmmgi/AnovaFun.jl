@@ -180,12 +180,17 @@ _factor_levels(factors, data) = Dict(f => length(unique(data[!, f])) for f in fa
 
 
 function _significance!(results::DataFrame)
-    results[!, :sig] = map(
-        p ->
-            p < P_VALUE_THRESHOLD_001 ? "***" :
-            p < P_VALUE_THRESHOLD_01 ? "**" : p < P_VALUE_THRESHOLD_05 ? "*" : "n.s.",
-        results.p,
-    )
+    results[!, :sig] = map(results.p) do p
+        if p < P_VALUE_THRESHOLD_001
+            "***"
+        elseif p < P_VALUE_THRESHOLD_01
+            "**"
+        elseif p < P_VALUE_THRESHOLD_05
+            "*"
+        else
+            "n.s."
+        end
+    end
     return results
 end
 

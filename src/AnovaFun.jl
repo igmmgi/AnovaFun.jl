@@ -50,7 +50,8 @@ include("types/types.jl")
 include("utils/utils.jl")
 
 # ANOVA computation
-include("anova/validation.jl")  # Load validation before anovas.jl
+include("anova/constants.jl")  
+include("anova/validation.jl")  
 include("anova/ttests.jl")
 include("anova/anovas.jl")
 include("anova/anovas_between.jl")  
