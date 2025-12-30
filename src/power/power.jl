@@ -17,7 +17,9 @@ Perform power analysis for an ANOVA design using simulation.
 - `alpha::Float64`: Significance level (default: 0.05)
 
 # Returns
-A `PowerResult` object containing power estimates and effect sizes (partial eta-squared) for each effect.
+A `PowerResult` object containing:
+- Power estimates and effect sizes (partial eta-squared) for each ANOVA effect
+- Power and effect sizes (Cohen's d) for pairwise comparisons (all pairwise comparisons across all cell means)
 
 # Examples
 ```julia
@@ -64,6 +66,9 @@ function power_analysis(
     
     # Update power_df to show per-group n instead of total n
     result.power.n .= n
+    if !isnothing(result.pairwise)
+        result.pairwise.n .= n
+    end
     
     return result
 end
@@ -250,7 +255,11 @@ function _power_simulation(
         EffectSize = mean_effect_sizes,
     )
     
-    return PowerResult(between_dict, within_dict, power_df, n_sims, alpha)
+    # Compute pairwise comparison power
+    # Pass mu_vec and sd_vec for calculating true population effect sizes
+    pairwise_df = _compute_pairwise_power(first_result, between_factors, within_factors, n_sims, alpha, n, generate_sim_data, cells, mu_vec, sd_vec, labelnames)
+    
+    return PowerResult(between_dict, within_dict, power_df, pairwise_df, n_sims, alpha)
 end
 
 """
@@ -264,4 +273,172 @@ function _run_anova_on_sim_data(data::DataFrame, between_factors::Vector{Symbol}
                  between=isempty(between_factors) ? nothing : between_factors,
                  within=isempty(within_factors) ? nothing : within_factors,
                  effect_size=:pes, correction=:none)
+end
+
+"""
+    _compute_pairwise_power(first_result, between_factors, within_factors, n_sims, alpha, n, generate_sim_data, cells, mu_vec, sd_vec, labelnames)
+
+Compute power and effect sizes for pairwise comparisons using simulation.
+Effect sizes are calculated from true population parameters (mu, sd) to match Superpower.
+"""
+function _compute_pairwise_power(
+    first_result::AnovaResult,
+    between_factors::Vector{Symbol},
+    within_factors::Vector{Symbol},
+    n_sims::Int,
+    alpha::Float64,
+    n::Int,
+    generate_sim_data::Function,
+    cells::Vector{String},
+    mu_vec::Vector{Float64},
+    sd_vec::Vector{Float64},
+    labelnames::Dict{Symbol, Vector{String}},
+)
+    try
+        # Get emmeans for all cells
+        em = emmeans(first_result)
+        
+        # Get pairwise comparisons (all pairwise across all cell means)
+        pw_result = pairwise(em, simple=nothing, adjust=:none)
+        
+        if nrow(pw_result.table) == 0
+            return nothing
+        end
+        
+        # Get the highest-order effect to access means with N values
+        highest_effect = _get_highest_order_effect(em.means)
+        effect_data = filter(row -> row.Effect == highest_effect, em.means)
+        
+        # Initialize tracking arrays
+        n_comparisons = nrow(pw_result.table)
+        significant_counts = zeros(Int, n_comparisons)
+        effect_sizes_sum = zeros(Float64, n_comparisons)
+        # Use Contrast strings directly as comparison names
+        comparison_names = [row.Contrast for row in eachrow(pw_result.table)]
+        
+        # Helper function to compute pairwise on simulated data
+        # Returns both pairwise table and ANOVA result (for MSE)
+        function compute_pairwise_on_sim(sim_data::DataFrame)
+            try
+                sim_anova = anova(sim_data, :dv, :id,
+                                 between=isempty(between_factors) ? nothing : between_factors,
+                                 within=isempty(within_factors) ? nothing : within_factors,
+                                 effect_size=:pes, correction=:none)
+                sim_em = emmeans(sim_anova)
+                sim_pw = pairwise(sim_em, simple=nothing, adjust=:none)
+                
+                if nrow(sim_pw.table) == n_comparisons
+                    return (sim_pw.table, sim_anova)
+                end
+            catch
+                return nothing
+            end
+            return nothing
+        end
+        
+        # Run simulations
+        for sim in 1:n_sims
+            try
+                # Generate data using the provided function
+                sim_data = generate_sim_data(n)
+                
+                result = compute_pairwise_on_sim(sim_data)
+                if isnothing(result)
+                    continue
+                end
+                pw_table, sim_anova = result
+                
+                if nrow(pw_table) != n_comparisons
+                    continue
+                end
+                
+                # Track significance and effect sizes
+                # Match comparisons by Contrast string to ensure correct ordering
+                for (idx, pw_row) in enumerate(eachrow(pw_result.table))
+                    # Find matching comparison in simulated pairwise table
+                    # Normalize Contrast strings for comparison (strip whitespace)
+                    pw_contrast = strip(pw_row.Contrast)
+                    matching_sim_row = nothing
+                    for sim_row in eachrow(pw_table)
+                        sim_contrast = strip(sim_row.Contrast)
+                        if sim_contrast == pw_contrast
+                            matching_sim_row = sim_row
+                            break
+                        end
+                    end
+                    
+                    if isnothing(matching_sim_row)
+                        continue
+                    end
+                    
+                    sim_row = matching_sim_row
+                    
+                    if sim_row.p < alpha
+                        significant_counts[idx] += 1
+                    end
+                    
+                    # Calculate Cohen's d from pairwise result using t-statistic
+                    # Cohen's d = t * sqrt(1/n1 + 1/n2) for between-subjects
+                    # For equal sample sizes: d = t * sqrt(2/n_per_group)
+                    # For within-subjects: d = t / sqrt(n) (simpler approximation)
+                    
+                    # Access t-statistic from DataFrameRow
+                    # Pairwise always returns a t column, so we can access it directly
+                    t_stat = sim_row.t
+                    
+                    # Only skip if t-statistic is not finite (NaN or Inf)
+                    # Zero is a valid value and should be accumulated
+                    if !isfinite(t_stat)
+                        continue
+                    end
+                    
+                    if !isempty(between_factors) && isempty(within_factors)
+                        # Pure between-subjects: d = t * sqrt(2/n_per_group)
+                        # n here is total_n (passed from _power_simulation), need per-group n
+                        n_groups = prod(length(labelnames[f]) for f in between_factors)
+                        n_per_group = n ÷ n_groups
+                        if n_per_group > 0
+                            cohens_d = abs(t_stat) * sqrt(2.0 / n_per_group)
+                        else
+                            cohens_d = 0.0
+                        end
+                    else
+                        # Within-subjects or mixed: d = t / sqrt(n_effective)
+                        # Use df+1 as approximation for n
+                        n_effective = sim_row.df + 1
+                        if n_effective > 0
+                            cohens_d = abs(t_stat) / sqrt(n_effective)
+                        else
+                            cohens_d = 0.0
+                        end
+                    end
+                    
+                    # Ensure we have a valid number
+                    if !isfinite(cohens_d)
+                        cohens_d = 0.0
+                    end
+                    
+                    effect_sizes_sum[idx] += cohens_d
+                end
+            catch
+                continue
+            end
+        end
+        
+        # Calculate power and mean effect sizes
+        inv_n_sims = 1.0 / n_sims
+        power_values = significant_counts .* inv_n_sims .* 100.0
+        mean_effect_sizes = effect_sizes_sum .* inv_n_sims
+        
+        pairwise_df = DataFrame(
+            n = fill(n, n_comparisons),
+            Comparison = comparison_names,
+            Power = power_values,
+            EffectSize = mean_effect_sizes,
+        )
+        
+        return pairwise_df
+    catch
+        return nothing
+    end
 end

@@ -423,6 +423,7 @@ Results from a power analysis.
 
 # Fields
 - `power::DataFrame`: Power estimates for each effect with columns: n, Effect, Power, EffectSize
+- `pairwise::Union{DataFrame, Nothing}`: Power and effect sizes for pairwise comparisons (columns: Comparison, n, power, effect_size)
 - `between::Union{Dict{Symbol, Vector{String}}, Nothing}`: Between-subjects factors and their levels
 - `within::Union{Dict{Symbol, Vector{String}}, Nothing}`: Within-subjects factors and their levels
 - `n_sims::Union{Int, Nothing}`: Number of simulations (if simulation method)
@@ -430,6 +431,7 @@ Results from a power analysis.
 
 # Examples
 ```julia
+using AnovaFun
 result = power_analysis(40,
                         between=Dict(:voice => [:human, :robot]),
                         within=Dict(:emotion => [:cheerful, :sad]),
@@ -446,6 +448,7 @@ struct PowerResult
     between::Union{Dict{Symbol, Vector{String}}, Nothing}
     within::Union{Dict{Symbol, Vector{String}}, Nothing}
     power::DataFrame
+    pairwise::Union{DataFrame, Nothing}  # Pairwise comparison power and effect sizes
     n_sims::Union{Int, Nothing}
     alpha::Float64
 end
@@ -469,7 +472,14 @@ function Base.show(io::IO, ::MIME"text/plain", pr::PowerResult)
     end
     println(io, "  Alpha: $(pr.alpha)")
     println(io)
+    println(io, "ANOVA Effects:")
     PrettyTables.pretty_table(io, pr.power)
+    
+    if !isnothing(pr.pairwise) && nrow(pr.pairwise) > 0
+        println(io)
+        println(io, "Pairwise Comparisons:")
+        PrettyTables.pretty_table(io, pr.pairwise)
+    end
 end
 
 Base.show(io::IO, pr::PowerResult) = print(io, "PowerResult")
