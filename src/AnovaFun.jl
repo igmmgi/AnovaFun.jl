@@ -15,12 +15,10 @@ using Distributions: FDist, TDist, Chisq, MvNormal, cdf, quantile
 using GLM
 using LinearAlgebra
 using Logging
-using Random
-
-# Import Makie - backends are loaded/activated by users
-using Makie
+using Makie # Import Makie - backends are loaded/activated by users
 using PrettyTables
 using Printf
+using Random
 using Statistics: mean, var, median, cov, std, quantile, cor
 using StatsModels
 
@@ -55,7 +53,7 @@ include("utils/utils.jl")
 include("anova/validation.jl")  # Load validation before anovas.jl
 include("anova/ttests.jl")
 include("anova/anovas.jl")
-include("anova/anovas_between.jl")  # Specialized ANOVA implementations
+include("anova/anovas_between.jl")  
 include("anova/anovas_within.jl")
 include("anova/anovas_mixed.jl")
 include("anova/homogeneity.jl")
@@ -75,22 +73,22 @@ include("output/report.jl")
 include("output/tables.jl")
 
 # Plotting
-include("plotting/plot_types.jl")  # Plot-related type definitions
-include("plotting/plot_config.jl")  # Plot configuration and defaults
-include("plotting/plot_utils.jl")  # Plot utility functions
-include("plotting/plot_data.jl")  # Data preparation functions
-include("plotting/plot_facets.jl")  # Faceting functions
-include("plotting/plot_preparation.jl")  # Parameter preparation
-include("plotting/plot_panels.jl")  # Panel plotting
-include("plotting/plot_postprocessing.jl")  # Post-processing
-include("plotting/plot.jl")  # Main plot_anova function
-include("plotting/primitives/common.jl")  # Common utilities for primitives
-include("plotting/primitives/distribution_base.jl")  # Base for distribution plots
-include("plotting/primitives/line_bar.jl")  # Line and bar plots
-include("plotting/primitives/violin.jl")  # Violin plots
-include("plotting/primitives/boxplot.jl")  # Box plots
-include("plotting/primitives/component_renderer.jl")  # Unified raincloud component rendering
-include("plotting/primitives/raincloud.jl")  # Raincloud plots
+include("plotting/plot_types.jl")  
+include("plotting/plot_config.jl")  
+include("plotting/plot_utils.jl")  
+include("plotting/plot_data.jl")  
+include("plotting/plot_facets.jl")  
+include("plotting/plot_preparation.jl")  
+include("plotting/plot_panels.jl")  
+include("plotting/plot_postprocessing.jl")  
+include("plotting/plot.jl")  
+include("plotting/primitives/common.jl")  
+include("plotting/primitives/distribution_base.jl")  
+include("plotting/primitives/line_bar.jl")  
+include("plotting/primitives/violin.jl")  
+include("plotting/primitives/boxplot.jl")  
+include("plotting/primitives/component_renderer.jl")
+include("plotting/primitives/raincloud.jl")
 
 # Precompilation
 include("precompile.jl")

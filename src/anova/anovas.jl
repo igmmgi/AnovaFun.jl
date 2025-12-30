@@ -1,8 +1,3 @@
-# P-value thresholds for significance markers in output
-const P_VALUE_THRESHOLD_001 = 0.001  # Display: *** 
-const P_VALUE_THRESHOLD_01 = 0.01    # Display: **
-const P_VALUE_THRESHOLD_05 = 0.05    # Display: *
-
 """
     anova(data, dv, id; within=nothing, between=nothing, correction=:none, effect_size=:pes)
 
@@ -164,7 +159,7 @@ end
 
 function _push_result!(results, effect_name, df_n, df_d, ss_n, ss_d)
     mse = ss_d / df_d
-    F = (ss_n / df_n) / mse  # Reuse mse instead of recalculating
+    F = (ss_n / df_n) / mse  
     p = 1.0 - cdf(FDist(df_n, df_d), F)
     push!(
         results,

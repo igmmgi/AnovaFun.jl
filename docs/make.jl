@@ -24,6 +24,6 @@ makedocs(
         size_threshold = nothing,  
     ),
     doctest = true,
-    checkdocs = :exports,  
+    checkdocs = :exports,
 )
 

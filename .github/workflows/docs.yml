@@ -26,7 +26,7 @@ jobs:
             Pkg.develop(PackageSpec(path=pwd()))
             Pkg.instantiate()
           '
-
+      
       - name: Install documentation dependencies
         run: |
           julia --project=docs/ -e '
@@ -37,7 +37,7 @@ jobs:
       - name: Build documentation
         run: |
           julia --project=docs/ docs/make.jl
-
+      
       - name: Check build output
         run: |
           ls -la docs/build/

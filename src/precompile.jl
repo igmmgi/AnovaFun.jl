@@ -2,14 +2,14 @@ import PrecompileTools
 import CSV
 
 PrecompileTools.@compile_workload begin
+
     # Create synthetic data for precompilation to cover main code paths
     df_between = DataFrame(
         dv = randn(40),
         id = repeat(1:20, 2),
         group = repeat([:A, :B], inner = 20),
     )
-    # Use actual test data files to avoid edge cases with negative error SS
-    # This ensures realistic structure that matches real use cases
+
     test_data_dir = joinpath(@__DIR__, "..", "test", "test_data")
     df_within = CSV.read(joinpath(test_data_dir, "data_within_2.csv"), DataFrame)
     df_mixed = CSV.read(joinpath(test_data_dir, "data_mixed_WB_2x2.csv"), DataFrame)
@@ -118,4 +118,5 @@ PrecompileTools.@compile_workload begin
     # Precompile sphericity and homogeneity checks
     sphericity_check(res_within)
     check_homogeneity(res_between)
+
 end
