@@ -94,7 +94,8 @@ function independent_ttest(x::AbstractVector, y::AbstractVector; tail::Symbol = 
 
     # Validate input lengths
     n_A, n_B = length(x), length(y)
-    (n_A < 2 || n_B < 2) && error("Independent t-test requires at least 2 observations per group")
+    (n_A < 2 || n_B < 2) &&
+        error("Independent t-test requires at least 2 observations per group")
 
     df = n_A + n_B - 2  # degrees of freedom for independent t-test
 
@@ -115,7 +116,7 @@ function independent_ttest(x::AbstractVector, y::AbstractVector; tail::Symbol = 
             t = Inf * sign(mean_x - mean_y)
         end
     else
-        t = (mean_x - mean_y) / sqrt(pooled_var * (1/n_A + 1/n_B))
+        t = (mean_x - mean_y) / sqrt(pooled_var * (1 / n_A + 1 / n_B))
     end
 
     # Handle edge cases

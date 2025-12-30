@@ -110,12 +110,12 @@ function emmeans(
 
         # Sort groups by factor level order to match user-specified order
         # Get unique levels for each factor in order of first appearance
-        level_orders = Dict{Symbol, Vector{Any}}()
+        level_orders = Dict{Symbol,Vector{Any}}()
         for factor in effect_factors
             unique_levels = unique(result.data[!, factor])
             level_orders[factor] = unique_levels
         end
-        
+
         # Sort groups based on level order (lexicographic order across factors)
         sorted_groups = collect(grouped)
         if length(effect_factors) == 1
@@ -125,7 +125,10 @@ function emmeans(
             sort!(sorted_groups, by = g -> findfirst(==(g[1, factor]), level_order))
         else
             # Multiple factors: sort lexicographically by factor order
-            sort!(sorted_groups, by = g -> [findfirst(==(g[1, f]), level_orders[f]) for f in effect_factors])
+            sort!(
+                sorted_groups,
+                by = g -> [findfirst(==(g[1, f]), level_orders[f]) for f in effect_factors],
+            )
         end
 
         for group in sorted_groups
@@ -145,7 +148,7 @@ function emmeans(
             cell_mean = mean(id_means[!, result.dv])
             n_id = nrow(id_means)
             n_observations = nrow(group)
-            
+
             # Compute SD (standard deviation of subject-level means)
             cell_sd = n_id > 1 ? std(id_means[!, result.dv]) : 0.0
 

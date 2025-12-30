@@ -59,11 +59,11 @@ result = sample_size(target_power=80,  # 80% power
 """
 function sample_size(;
     target_power::Real = 80,
-    within::Union{Dict{Symbol, <:Vector}, Nothing} = nothing,
-    between::Union{Dict{Symbol, <:Vector}, Nothing} = nothing,
-    mu::Union{Real, Vector{<:Real}},
-    sd::Union{Real, Vector{<:Real}},
-    r::Union{Real, Vector{<:Real}, Nothing} = nothing,
+    within::Union{Dict{Symbol,<:Vector},Nothing} = nothing,
+    between::Union{Dict{Symbol,<:Vector},Nothing} = nothing,
+    mu::Union{Real,Vector{<:Real}},
+    sd::Union{Real,Vector{<:Real}},
+    r::Union{Real,Vector{<:Real},Nothing} = nothing,
     method::Symbol = :binary,
     n_sims::Int = 1000,
     alpha::Float64 = 0.05,
@@ -72,13 +72,15 @@ function sample_size(;
     step::Int = 1,
     n_anchors::Int = 10,
 )
-    
-    (target_power <= 0 || target_power >= 100) && throw(ArgumentError("invalid target_power"))
+
+    (target_power <= 0 || target_power >= 100) &&
+        throw(ArgumentError("invalid target_power"))
     method ∉ [:binary, :sequential] && throw(ArgumentError("Unknown method: $method"))
-    
+
     # Extract factor names and convert labels to strings
-    between_factors, within_factors, labelnames, factor_levels = _process_factors(within, between)
-    
+    between_factors, within_factors, labelnames, factor_levels =
+        _process_factors(within, between)
+
     mu_vec, sd_vec, r_vec, _ = _normalize_sim_inputs(
         between_factors,
         within_factors,
@@ -90,9 +92,37 @@ function sample_size(;
     )
 
     if method == :binary
-        return _sample_size_binary(between_factors, within_factors, mu_vec, sd_vec, r_vec, labelnames, target_power, n_sims, alpha, min_n, max_n, n_anchors, factor_levels)
+        return _sample_size_binary(
+            between_factors,
+            within_factors,
+            mu_vec,
+            sd_vec,
+            r_vec,
+            labelnames,
+            target_power,
+            n_sims,
+            alpha,
+            min_n,
+            max_n,
+            n_anchors,
+            factor_levels,
+        )
     elseif method == :sequential
-        return _sample_size_sequential(between_factors, within_factors, mu_vec, sd_vec, r_vec, labelnames, target_power, n_sims, alpha, min_n, max_n, step, factor_levels)
+        return _sample_size_sequential(
+            between_factors,
+            within_factors,
+            mu_vec,
+            sd_vec,
+            r_vec,
+            labelnames,
+            target_power,
+            n_sims,
+            alpha,
+            min_n,
+            max_n,
+            step,
+            factor_levels,
+        )
     end
 end
 
@@ -102,7 +132,7 @@ end
 Sort effects: main effects first (single factor), then interactions (multiple factors).
 """
 function _sort_effects_by_order(power_df::DataFrame)
-    sort(power_df, :Effect, by=effect -> (count("×", effect) + 1, effect))
+    sort(power_df, :Effect, by = effect -> (count("×", effect) + 1, effect))
 end
 
 """
@@ -114,7 +144,7 @@ Returns a Dict with n and effect power values.
 function _build_power_row(n::Int, sorted_power_df::DataFrame)
     effect_cols = [Symbol(row.Effect) for row in eachrow(sorted_power_df)]
     power_values = [row.Power for row in eachrow(sorted_power_df)]
-    row_data = Dict{Symbol, Union{Int, Float64}}(:n => n)
+    row_data = Dict{Symbol,Union{Int,Float64}}(:n => n)
     for (effect, power) in zip(effect_cols, power_values)
         row_data[effect] = power
     end
@@ -133,7 +163,7 @@ function _sample_size_binary(
     within_factors,
     mu_vec::Vector{Float64},
     sd_vec::Vector{Float64},
-    r_vec::Union{Vector{Float64}, Nothing},
+    r_vec::Union{Vector{Float64},Nothing},
     labelnames,
     target_power::Real,
     n_sims::Int,
@@ -141,57 +171,75 @@ function _sample_size_binary(
     min_n::Int,
     max_n::Int,
     n_anchors::Int,
-    factor_levels::Dict{Symbol, Int},
+    factor_levels::Dict{Symbol,Int},
 )
-    between_dict = isempty(between_factors) ? nothing : Dict(factor => labelnames[factor] for factor in between_factors)
-    within_dict = isempty(within_factors) ? nothing : Dict(factor => labelnames[factor] for factor in within_factors)
-    
+    between_dict =
+        isempty(between_factors) ? nothing :
+        Dict(factor => labelnames[factor] for factor in between_factors)
+    within_dict =
+        isempty(within_factors) ? nothing :
+        Dict(factor => labelnames[factor] for factor in within_factors)
+
     # Cache power results by n (per-group n) to avoid re-running simulations
-    power_cache = Dict{Int, PowerResult}()
-    
+    power_cache = Dict{Int,PowerResult}()
+
     # Helper function to run or retrieve simulation
     # n is per-group n, convert to total n for simulation
     function get_power_at_n(n_per_group::Int)
         if !haskey(power_cache, n_per_group)
             total_n = _calculate_total_n(n_per_group, between_factors, factor_levels)
-            power_result = _power_simulation(total_n, between_factors, within_factors, mu_vec, sd_vec, r_vec, n_sims, alpha, false, between_dict, within_dict, labelnames, factor_levels)
+            power_result = _power_simulation(
+                total_n,
+                between_factors,
+                within_factors,
+                mu_vec,
+                sd_vec,
+                r_vec,
+                n_sims,
+                alpha,
+                false,
+                between_dict,
+                within_dict,
+                labelnames,
+                factor_levels,
+            )
             # Update power_df to show per-group n instead of total n
             power_result.power.n .= n_per_group
             power_cache[n_per_group] = power_result
         end
         return power_cache[n_per_group]
     end
-    
+
     # PHASE 1: "anchors" for smoother plots
-    step = div((max_n - min_n), n_anchors - 1)  
-    anchor_points = [min_n + i * step for i in 0:(n_anchors-1)]
+    step = div((max_n - min_n), n_anchors - 1)
+    anchor_points = [min_n + i * step for i = 0:(n_anchors-1)]
     anchor_points[end] = max_n
     anchor_points = unique(anchor_points)
-    
+
     @info "Pre-search: Testing $(length(anchor_points)) anchor points (n_sims=$n_sims)"
     for test_n_per_group in anchor_points
         @info "  Anchor point: n=$test_n_per_group (per group)"
         get_power_at_n(test_n_per_group)
     end
-    
+
     # Get effect names from first simulation
     first_result = power_cache[anchor_points[1]]
     effect_names = first_result.power.Effect
-    
+
     @info "Found $(length(effect_names)) effects: $(effect_names)"
-    
+
     # PHASE 2: binary search peer effect
-    effect_n_solutions = Dict{String, Union{Int, Nothing}}()
+    effect_n_solutions = Dict{String,Union{Int,Nothing}}()
     for effect in effect_names
         @info "Binary search for effect: $effect"
-        
+
         # Use anchor points to find better low/high
         n_low, n_high = min_n, max_n
-        for i in 1:(length(anchor_points)-1)
+        for i = 1:(length(anchor_points)-1)
             n1, n2 = anchor_points[i], anchor_points[i+1]
-            power1 = power_cache[n1].power[power_cache[n1].power.Effect .== effect, :Power][1]
-            power2 = power_cache[n2].power[power_cache[n2].power.Effect .== effect, :Power][1]
-            
+            power1 = power_cache[n1].power[power_cache[n1].power.Effect.==effect, :Power][1]
+            power2 = power_cache[n2].power[power_cache[n2].power.Effect.==effect, :Power][1]
+
             # Check if this effect crosses target in this interval
             if power1 < target_power && power2 >= target_power
                 n_low = n1
@@ -202,42 +250,48 @@ function _sample_size_binary(
                 n_low = n2
             end
         end
-        
+
         # If effect already meets target at min anchor, search below (but can't go below min_n)
-        if power_cache[anchor_points[1]].power[power_cache[anchor_points[1]].power.Effect .== effect, :Power][1] >= target_power
+        if power_cache[anchor_points[1]].power[
+            power_cache[anchor_points[1]].power.Effect.==effect,
+            :Power,
+        ][1] >= target_power
             n_high = anchor_points[1]  # This is min_n
             n_low = 0  # Set to 0 to allow binary search to converge to min_n
             @info "  Effect already meets target at min anchor (n=$n_high), searching below"
         end
-        
+
         # If effect never meets target in anchors, search up to max
         if n_low >= n_high || n_high == max_n
             @info "  No crossing found in anchors, will search full range or use max"
         end
-        
+
         effect_best_n = nothing
         # Check if anchors already bracketed tightly enough (adjacent n values)
         # If so, skip binary search and check if n_high meets target
         if n_high - n_low <= 1
             @info "  Anchor points already bracket solution tightly, skipping binary search"
-            power_at_high = power_cache[n_high].power[power_cache[n_high].power.Effect .== effect, :Power][1]
+            power_at_high = power_cache[n_high].power[
+                power_cache[n_high].power.Effect.==effect,
+                :Power,
+            ][1]
             if power_at_high >= target_power
                 effect_best_n = n_high
             end
         end
-        
+
         while n_high - n_low > 1
 
             @info "  Binary search: n_low=$n_low, n_high=$n_high"
             test_n = div(n_low + n_high, 2)
-            
+
             # Get or compute power at this n
             power_result = get_power_at_n(test_n)
-            
+
             # Get power for THIS specific effect
-            effect_row = power_result.power[power_result.power.Effect .== effect, :]
+            effect_row = power_result.power[power_result.power.Effect.==effect, :]
             effect_power = effect_row.Power[1]
-            
+
             if effect_power >= target_power # This effect meets target, try smaller n
                 n_high = test_n
                 if isnothing(effect_best_n) || test_n < effect_best_n
@@ -247,19 +301,19 @@ function _sample_size_binary(
                 n_low = test_n
             end
         end
-        
+
         effect_n_solutions[effect] = effect_best_n
-        
+
         if !isnothing(effect_best_n)
             @info "  → $effect: Minimum n = $effect_best_n"
         else
             @info "  → $effect: Did not achieve target power"
         end
     end
-    
+
     # PHASE 3: What is recommended N?
     valid_solutions = [n for n in values(effect_n_solutions) if !isnothing(n)]
-    
+
     if isempty(valid_solutions) # No effect reached target power
         @minimal_warning "Could not achieve target power $(target_power)% for any effect with n up to $(max_n)."
         best_n = max_n
@@ -267,24 +321,24 @@ function _sample_size_binary(
         best_n = maximum(valid_solutions)
         @info "Recommended n = $best_n (ensures ALL effects meet target power)"
     end
-    
+
     # Build results 
     results = DataFrame()
     for test_n in sort(collect(keys(power_cache)))
         power_result = power_cache[test_n]
         sorted_power = _sort_effects_by_order(power_result.power)
         row_data = _build_power_row(test_n, sorted_power)
-        
+
         if isempty(results)
             results = DataFrame(row_data)
         else
             push!(results, row_data)
         end
     end
-    
+
     # Get the power DataFrame for the recommended n
     best_power_df = power_cache[best_n].power
-    
+
     # Reorder columns: n first, then main effects, then interactions
     if !isempty(results)
         effect_cols = [col for col in propertynames(results) if col != :n]
@@ -293,7 +347,7 @@ function _sample_size_binary(
         ordered_cols = [:n, sort(main_effects)..., sort(interactions)...]
         results = results[:, ordered_cols]
     end
-    
+
     return SampleSizeResult(best_power_df, results, Float64(target_power))
 end
 
@@ -314,7 +368,7 @@ function _sample_size_sequential(
     within_factors,
     mu_vec::Vector{Float64},
     sd_vec::Vector{Float64},
-    r_vec::Union{Vector{Float64}, Nothing},
+    r_vec::Union{Vector{Float64},Nothing},
     labelnames,
     target_power::Real,
     n_sims::Int,
@@ -322,54 +376,72 @@ function _sample_size_sequential(
     min_n::Int,
     max_n::Int,
     step::Int,
-    factor_levels::Dict{Symbol, Int},
+    factor_levels::Dict{Symbol,Int},
 )
     results = DataFrame()  # Will be initialized with n and effect columns
     best_n = nothing
     best_power_df = nothing
-    
-    between_dict = isempty(between_factors) ? nothing : Dict(factor => labelnames[factor] for factor in between_factors)
-    within_dict = isempty(within_factors) ? nothing : Dict(factor => labelnames[factor] for factor in within_factors)
-    
+
+    between_dict =
+        isempty(between_factors) ? nothing :
+        Dict(factor => labelnames[factor] for factor in between_factors)
+    within_dict =
+        isempty(within_factors) ? nothing :
+        Dict(factor => labelnames[factor] for factor in within_factors)
+
     # Test each sample size from min_n to max_n (with early stopping)
     # test_n is per-group n, convert to total n for simulation
     last_power_result = nothing  # Cache last result to avoid re-running
-    for test_n_per_group in min_n:step:max_n
+    for test_n_per_group = min_n:step:max_n
         @info "Sequential search: Testing sample size $test_n_per_group (per group, step=$step)"
-        
+
         # Calculate power (convert per-group n to total n)
         total_n = _calculate_total_n(test_n_per_group, between_factors, factor_levels)
-        power_result = _power_simulation(total_n, between_factors, within_factors, mu_vec, sd_vec, r_vec, n_sims, alpha, false, between_dict, within_dict, labelnames, factor_levels)
+        power_result = _power_simulation(
+            total_n,
+            between_factors,
+            within_factors,
+            mu_vec,
+            sd_vec,
+            r_vec,
+            n_sims,
+            alpha,
+            false,
+            between_dict,
+            within_dict,
+            labelnames,
+            factor_levels,
+        )
         # Update power_df to show per-group n instead of total n
         power_result.power.n .= test_n_per_group
         last_power_result = power_result  # Cache for potential reuse
-        
+
         # Sort effects: main effects first, then interactions
         sorted_power = _sort_effects_by_order(power_result.power)
-        
+
         # Build row (using per-group n)
         row_data = _build_power_row(test_n_per_group, sorted_power)
-        
+
         # Initialize results DataFrame structure on first iteration
         if isempty(results)
             results = DataFrame(row_data)
         else
             push!(results, row_data)
         end
-        
+
         # Track the first sample size where all effects achieve target power
         if isnothing(best_n) && all(power_result.power.Power .>= target_power)
             best_n = test_n_per_group
             best_power_df = power_result.power
-            break  
+            break
         end
     end
-    
+
     # If no sample size achieved target power, use the maximum tested
     if isnothing(best_n)
         @minimal_warning "Could not achieve target power $(target_power)% with n up to $(max_n)."
         best_n = max_n
-        
+
         # Use cached result from last iteration (max_n) instead of re-running
         # Ensure it shows per-group n
         if !isnothing(last_power_result)
@@ -377,7 +449,7 @@ function _sample_size_sequential(
             best_power_df = last_power_result.power
         end
     end
-    
+
     # Reorder columns: n first, then main effects, then interactions
     if !isempty(results)
         effect_cols = [col for col in propertynames(results) if col != :n]
@@ -387,6 +459,6 @@ function _sample_size_sequential(
         ordered_cols = [:n, sort(main_effects)..., sort(interactions)...]
         results = results[:, ordered_cols]
     end
-    
+
     return SampleSizeResult(best_power_df, results, Float64(target_power))
 end

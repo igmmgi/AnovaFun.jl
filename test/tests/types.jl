@@ -115,13 +115,13 @@
         @test between_d.between_factors == bf
         @test isempty(between_d.within_factors)
         @test between_d.n_id == n
-        
+
         within_d = DesignInfo(:within, Symbol[], wf, n)
         @test within_d.type == :within
         @test isempty(within_d.between_factors)
         @test within_d.within_factors == wf
         @test within_d.n_id == n
-        
+
         mixed_d = DesignInfo(:mixed, bf, wf, n)
         @test mixed_d.type == :mixed
         @test mixed_d.between_factors == bf

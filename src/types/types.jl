@@ -384,11 +384,11 @@ result.within       # Access within-subjects factors
 ```
 """
 struct PowerResult
-    between::Union{Dict{Symbol, Vector{String}}, Nothing}
-    within::Union{Dict{Symbol, Vector{String}}, Nothing}
+    between::Union{Dict{Symbol,Vector{String}},Nothing}
+    within::Union{Dict{Symbol,Vector{String}},Nothing}
     power::DataFrame
-    pairwise::Union{DataFrame, Nothing}  # Pairwise comparison power and effect sizes
-    n_sims::Union{Int, Nothing}
+    pairwise::Union{DataFrame,Nothing}  # Pairwise comparison power and effect sizes
+    n_sims::Union{Int,Nothing}
     alpha::Float64
 end
 
@@ -396,7 +396,7 @@ end
 function Base.show(io::IO, ::MIME"text/plain", pr::PowerResult)
     println(io, "Power Analysis Results")
     println(io, "  N: $(first(pr.power.n))")
-    
+
     # Display design information
     if !isnothing(pr.between) && !isempty(pr.between)
         between_str = join(["$(k)($(join(v, ", ")))" for (k, v) in pr.between], ", ")
@@ -413,7 +413,7 @@ function Base.show(io::IO, ::MIME"text/plain", pr::PowerResult)
     println(io)
     println(io, "ANOVA Effects:")
     PrettyTables.pretty_table(io, pr.power)
-    
+
     if !isnothing(pr.pairwise) && nrow(pr.pairwise) > 0
         println(io)
         println(io, "Pairwise Comparisons:")
@@ -459,4 +459,5 @@ function Base.show(io::IO, ::MIME"text/plain", sr::SampleSizeResult)
     PrettyTables.pretty_table(io, sr.power)
 end
 
-Base.show(io::IO, sr::SampleSizeResult) = print(io, "SampleSizeResult(n=$(first(sr.power.n)))")
+Base.show(io::IO, sr::SampleSizeResult) =
+    print(io, "SampleSizeResult(n=$(first(sr.power.n)))")

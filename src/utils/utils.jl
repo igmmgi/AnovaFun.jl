@@ -186,13 +186,18 @@ function errorbar_limits!(result::EmmeansResult, errorbars::Symbol)
 
     # For :SD, use the SD column
     if errorbars == :SD
-        hasproperty(means_df, :SD) || throw(ArgumentError("SD column not found in emmeans result. Make sure you're using a recent version of AnovaFun."))
+        hasproperty(means_df, :SD) || throw(
+            ArgumentError(
+                "SD column not found in emmeans result. Make sure you're using a recent version of AnovaFun.",
+            ),
+        )
         means_df[!, :error] = means_df.SD
-    # For :SE, use the SE column
+        # For :SE, use the SE column
     elseif errorbars == :SE
-        hasproperty(means_df, :SE) || throw(ArgumentError("SE column not found in emmeans result."))
+        hasproperty(means_df, :SE) ||
+            throw(ArgumentError("SE column not found in emmeans result."))
         means_df[!, :error] = means_df.SE
-    # For :CI, compute error from Lower/Upper: (Upper - Lower) / 2
+        # For :CI, compute error from Lower/Upper: (Upper - Lower) / 2
     elseif errorbars == :CI
         means_df[!, :error] = (means_df.Upper .- means_df.Lower) ./ 2
         # For within-participant error bars, need raw data

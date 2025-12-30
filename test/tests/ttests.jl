@@ -39,5 +39,3 @@ using AnovaFun
         @test occursin("d", s)
     end
 end
-
-

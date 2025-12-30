@@ -84,7 +84,7 @@ function _pairs(
     )
 
     errors = select(anova.table, [:Effect, :DFn, :DFd, :MSE])
-    
+
     if isnothing(simple)
         # Mode 1: All pairwise comparisons across all cell means
         _process_all_pairwise!(results, means, errors, anova, adjust, level)
@@ -109,10 +109,10 @@ end
 function _get_highest_order_effect(means::DataFrame)::String
     unique_effects = filter(e -> e != "Grand Mean", unique(means.Effect))
     isempty(unique_effects) && return ""
-    
+
     # Count factors in each effect (by counting " × ")
     factor_counts = [(e, count("×", e) + 1) for e in unique_effects]
-    sort!(factor_counts, by=x -> x[2], rev=true)
+    sort!(factor_counts, by = x -> x[2], rev = true)
     return factor_counts[1][1]
 end
 
@@ -127,10 +127,10 @@ function _process_all_pairwise!(
 )
     effect = _get_highest_order_effect(means)
     isempty(effect) && return
-    
+
     effect_data = filter(row -> row.Effect == effect, means)
     nrow(effect_data) < 2 && return
-    
+
     error_info = _get_anova_error_info(errors, effect, anova.design)
     comparisons = _generate_pairwise_comparisons(effect_data, effect, anova, error_info)
     _add_comparison_results!(results, comparisons, "", effect, adjust, level)
@@ -147,10 +147,10 @@ function _process_simple_each!(
 )
     effect = _get_highest_order_effect(means)
     isempty(effect) && return
-    
+
     effect_factors = _parse_effect_name(effect)
     length(effect_factors) < 1 && return
-    
+
     # For each factor, compute simple contrasts
     for simple_factor in effect_factors
         _process_simple_factor!(results, means, errors, anova, simple_factor, adjust, level)
@@ -169,53 +169,69 @@ function _process_simple_factor!(
 )
     effect = _get_highest_order_effect(means)
     isempty(effect) && return
-    
+
     effect_factors = _parse_effect_name(effect)
-    
+
     # Validate that simple_factor is in the effect
     if simple_factor ∉ effect_factors
         available = join(string.(effect_factors), ", ")
-        throw(ArgumentError("Factor '$simple_factor' not found in effect. Available: $available"))
+        throw(
+            ArgumentError(
+                "Factor '$simple_factor' not found in effect. Available: $available",
+            ),
+        )
     end
-    
+
     # If only one factor, no conditioning needed
     if length(effect_factors) == 1
         _process_all_pairwise!(results, means, errors, anova, adjust, level)
         return
     end
-    
+
     effect_data = filter(row -> row.Effect == effect, means)
     conditioning_factors = filter(f -> f != simple_factor, effect_factors)
-    
+
     # Get error info for this effect
     error_info = _get_anova_error_info(errors, effect, anova.design)
-    
+
     # Get unique levels of conditioning factors
     conditioning_levels = _get_conditioning_levels(effect_data, conditioning_factors)
-    
+
     for cond_level in conditioning_levels
         # Filter data to this conditioning level
-        filtered_data = _filter_by_conditioning(effect_data, conditioning_factors, cond_level)
+        filtered_data =
+            _filter_by_conditioning(effect_data, conditioning_factors, cond_level)
         nrow(filtered_data) < 2 && continue
-        
+
         # Create context string (e.g., "CurrentCongruency = Congruent")
         context = _format_context(conditioning_factors, cond_level)
-        
+
         # Generate comparisons for this subset
         # Use the full effect name for proper SE calculation (level names are in interaction format)
-        comparisons = _generate_pairwise_comparisons(filtered_data, effect, anova, error_info)
-        _add_comparison_results!(results, comparisons, context, string(simple_factor), adjust, level)
+        comparisons =
+            _generate_pairwise_comparisons(filtered_data, effect, anova, error_info)
+        _add_comparison_results!(
+            results,
+            comparisons,
+            context,
+            string(simple_factor),
+            adjust,
+            level,
+        )
     end
 end
 
 # Get unique combinations of conditioning factor levels
-function _get_conditioning_levels(effect_data::DataFrame, conditioning_factors::Vector{Symbol})
+function _get_conditioning_levels(
+    effect_data::DataFrame,
+    conditioning_factors::Vector{Symbol},
+)
     levels_list = Vector{Vector{String}}()
-    
+
     for row in eachrow(effect_data)
         level_parts = strip.(split(row.Level, ","))
         effect_factors = _parse_effect_name(row.Effect)
-        
+
         # Extract values for conditioning factors only
         cond_values = String[]
         for (i, factor) in enumerate(effect_factors)
@@ -223,12 +239,12 @@ function _get_conditioning_levels(effect_data::DataFrame, conditioning_factors::
                 push!(cond_values, level_parts[i])
             end
         end
-        
+
         if cond_values ∉ levels_list
             push!(levels_list, cond_values)
         end
     end
-    
+
     return levels_list
 end
 
@@ -241,7 +257,7 @@ function _filter_by_conditioning(
     return filter(effect_data) do row
         level_parts = strip.(split(row.Level, ","))
         effect_factors = _parse_effect_name(row.Effect)
-        
+
         cond_idx = 1
         for (i, factor) in enumerate(effect_factors)
             if factor in conditioning_factors
@@ -256,8 +272,12 @@ function _filter_by_conditioning(
 end
 
 # Format context string for simple contrasts
-function _format_context(conditioning_factors::Vector{Symbol}, cond_level::Vector{String})::String
-    parts = [string(f) * " = " * cond_level[i] for (i, f) in enumerate(conditioning_factors)]
+function _format_context(
+    conditioning_factors::Vector{Symbol},
+    cond_level::Vector{String},
+)::String
+    parts =
+        [string(f) * " = " * cond_level[i] for (i, f) in enumerate(conditioning_factors)]
     return join(parts, ", ")
 end
 
