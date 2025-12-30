@@ -18,6 +18,7 @@ A Julia package for analysis of factorial experiments, including repeated measur
 - **Pairwise Comparisons** - Post-hoc tests with multiple comparison adjustments
 - **Sphericity Corrections** - Greenhouse-Geisser and Huynh-Feldt corrections
 - **Effect Sizes** - η² (eta squared), partial η², and ω² (omega squared)
+- **Power Analysis** - Simulation-based power analysis 
 - **Basic Plots** - Interactive plots via GLMakie or publication quality outputs via CairoMakie for ANOVA/emmeans results
 - **Output** - APA formatted tables and stats to latex, markdown, or text via PrettyTables
 

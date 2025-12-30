@@ -6,7 +6,7 @@ __precompile__(true)
 A Julia implementation of a traditional anova type analysis loosely based (inspired) by R's `ez`,
 `afex`, and `emmeans` packages. NB: This is not a full implementation (many features are missing!),
 but a simplified version implementing basic/standard anova functionality, and functionality that I
-currently use. IT IS PROBABLY (DEFINITELY) MISSING SOMETHING (LOTS!) IMPORTANT!
+currently use. IT IS PROBABLY (DEFINITELY!) MISSING SOMETHING (LOTS!) IMPORTANT!
 """
 module AnovaFun
 
@@ -26,8 +26,9 @@ using StatsModels
 
 # main functions user functions
 export anova, emmeans, pairwise, check_homogeneity, sphericity_check, sphericity_correction
-export p, f, sphericity, fstat
+export p, f, sphericity, fstat, tstat
 export m, ci, m_ci
+export paired_ttest, independent_ttest
 export anova_table, emmeans_table, pairwise_table
 export plot_anova, plot_sample_size
 
@@ -52,6 +53,7 @@ include("utils/utils.jl")
 
 # ANOVA computation
 include("anova/validation.jl")  # Load validation before anovas.jl
+include("anova/ttests.jl")
 include("anova/anovas.jl")
 include("anova/anovas_between.jl")  # Specialized ANOVA implementations
 include("anova/anovas_within.jl")

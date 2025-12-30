@@ -142,6 +142,56 @@ function fstat(result::AnovaResult, effect::String; format::Symbol = :markdown)
 end
 
 """
+    tstat(result; format::Symbol=:markdown)
+
+Return APA-style formatted statistics string for a t-test result.
+
+Accepts a named tuple like the outputs of `paired_ttest` or `independent_ttest`, containing:
+- `df`, `t`, `p`, and either `dz` (paired) or `d` (independent).
+
+Examples:
+```julia
+res = paired_ttest(x, y)
+tstat(res)  # "*t*(4) = -3.92, *p* = .017, dz = 1.75"
+```
+"""
+function tstat(result; format::Symbol = :markdown)
+    symbols = _get_symbols(format)
+
+    df = getproperty(result, :df)
+    t_val = getproperty(result, :t)
+    p_val = getproperty(result, :p)
+
+    df_str = if isnan(df)
+        "NaN"
+    elseif isinteger(df)
+        string(Int(df))
+    else
+        @sprintf("%.2f", df)
+    end
+
+    t_str = isnan(t_val) ? "NaN" : @sprintf("%.2f", t_val)
+
+    parts = String["$(symbols.t)($df_str) = $t_str"]
+
+    # p-value (reuse p() formatting when finite)
+    if isnan(p_val)
+        push!(parts, "$(symbols.p) = NaN")
+    else
+        push!(parts, p(p_val; format = format))
+    end
+
+    # Effect size (paired: dz, independent: d)
+    if hasproperty(result, :dz) && isfinite(getproperty(result, :dz))
+        push!(parts, "$(symbols.dz) = $(@sprintf("%.2f", getproperty(result, :dz)))")
+    elseif hasproperty(result, :d) && isfinite(getproperty(result, :d))
+        push!(parts, "$(symbols.d) = $(@sprintf("%.2f", getproperty(result, :d)))")
+    end
+
+    return join(parts, ", ")
+end
+
+"""
     m(result::EmmeansResult, effect::String, level::String; unit::String="", format::Symbol=:markdown)
 
 Format marginal mean string according to APA style.
@@ -281,6 +331,7 @@ function _get_symbols(format::Symbol)
         return (
             p = "*p*",
             f = "*F*",
+            t = "*t*",
             m = "*M*",
             ci_prefix = "*95% CI*",
             epsilon = "\$\\epsilon\$",
@@ -288,11 +339,14 @@ function _get_symbols(format::Symbol)
             eta_g2 = "\$\\eta_G^2\$",
             eta2 = "\$\\eta^2\$",
             omega2 = "\$\\omega^2\$",
+            d = "*d*",
+            dz = "\$d_z\$",
         )
     elseif format == :latex
         return (
             p = "\\textit{p}",
             f = "\\textit{F}",
+            t = "\\textit{t}",
             m = "\\textit{M}",
             ci_prefix = "95\\% CI",
             epsilon = "\$\\epsilon\$",
@@ -300,11 +354,14 @@ function _get_symbols(format::Symbol)
             eta_g2 = "\$\\eta_G^2\$",
             eta2 = "\$\\eta^2\$",
             omega2 = "\$\\omega^2\$",
+            d = "\\textit{d}",
+            dz = "\$d_z\$",
         )
     else # format == :text
         return (
             p = "p",
             f = "F",
+            t = "t",
             m = "M",
             ci_prefix = "95% CI",
             epsilon = "epsilon",
@@ -312,6 +369,8 @@ function _get_symbols(format::Symbol)
             eta_g2 = "eta_G^2",
             eta2 = "eta^2",
             omega2 = "omega^2",
+            d = "d",
+            dz = "dz",
         )
     end
 end

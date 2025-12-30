@@ -2,6 +2,7 @@ using Test
 
 # Import the package
 using AnovaFun
+CairoMakie.activate!() # is this needed for GitHub CI?
 
 # Include shared test utilities first
 include("tests/test_utils.jl")
@@ -29,6 +30,9 @@ println("="^40)
 
     # Effect Size Tests
     include("tests/effect_sizes.jl")
+
+    # t-test utilities
+    include("tests/ttests.jl")
 
     # Type and Table Tests
     include("tests/types.jl")
