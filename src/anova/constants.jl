@@ -16,30 +16,7 @@ const CORRECTION_NONE = :none
 const CORRECTION_GG = :GG       # Greenhouse-Geisser
 const CORRECTION_HF = :HF       # Huynh-Feldt
 
-# Pairwise comparison adjustment methods
+# Pairwise comparison adjustment methods (currently implemented)
 const PAIRWISE_ADJUST_NONE = :none
 const PAIRWISE_ADJUST_BONFERRONI = :bonferroni
-const PAIRWISE_ADJUST_HOLM = :holm
-const PAIRWISE_ADJUST_HOCHBERG = :hochberg
-const PAIRWISE_ADJUST_HOMMEL = :hommel
-const PAIRWISE_ADJUST_BH = :bh           # Benjamini-Hochberg
-const PAIRWISE_ADJUST_BY = :by           # Benjamini-Yekutieli
 const PAIRWISE_ADJUST_SIDAK = :sidak
-const PAIRWISE_ADJUST_SIDAK_SINGLE = :sidak_single
-
-# Error bar types
-const ERRORBAR_NONE = :none
-const ERRORBAR_EMMEANS = :emmeans
-const ERRORBAR_WITHIN = :within
-
-# Individual data display types
-const INDIVIDUAL_DATA_NONE = :none
-const INDIVIDUAL_DATA_POINTS = :points
-const INDIVIDUAL_DATA_CONNECTED = :connected_points
-
-# Plot types
-const PLOT_TYPE_LINE = :line
-const PLOT_TYPE_BAR = :bar
-const PLOT_TYPE_VIOLIN = :violin
-const PLOT_TYPE_BOXPLOT = :boxplot
-const PLOT_TYPE_RAIN_CLOUD = :raincloud
