@@ -161,7 +161,7 @@
             nothing,
         )
 
-        emmeans_res = EmmeansResult(means_df, anova_res, 0.95)
+        emmeans_res = EmmeansResult(means_df, anova_res, 0.95, nothing)
 
         # ci
         @test ci(1.00, 1.46) == "*95% CI* [1.00, 1.46]"

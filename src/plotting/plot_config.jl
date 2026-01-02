@@ -14,6 +14,7 @@ const PLOT_KWARGS = Dict{Symbol,Tuple{Any,String}}(
     :boxplot_strokewidth => (1.0, "Boxplot stroke width"),
     :boxplot_show_median => (true, "Boxplot show median"),
     :boxplot_show_notch => (true, "Boxplot show notch"),
+    :boxplot_show_outliers => (false, "Boxplot show outliers"),
     :boxplot_width => (0.1, "Boxplot width"),
     :boxplot_alpha => (0.3, "Boxplot transparency (0.0-1.0)"),
 
@@ -21,6 +22,7 @@ const PLOT_KWARGS = Dict{Symbol,Tuple{Any,String}}(
     :violin_color => (nothing, "Violin fill color (uses group color if nothing)"),
     :violin_strokecolor => (:grey, "Violin stroke color"),
     :violin_strokewidth => (1.0, "Violin stroke width"),
+    :violin_datalimits => (extrema, "Violin data limits (extrema, quantile)"),
     :violin_width => (0.25, "Violin width"),
     :violin_alpha => (
         0.3,

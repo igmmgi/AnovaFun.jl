@@ -4,7 +4,7 @@
         result = anova(data, :dv, :subject, between = [:BF1])
         em = emmeans(result, adjust = :none)
         # Filter for BF1 effect
-        em_bf1 = EmmeansResult(em.means[em.means.Effect.=="BF1", :], em.anova, em.level)
+        em_bf1 = EmmeansResult(em.means[em.means.Effect.=="BF1", :], em.anova, em.level, nothing)
         pairs_result = pairwise(em_bf1, adjust = :none)
 
         # R output: contrast = G1_L1 - G1_L2, estimate = -0.1643506, SE = 0.1862775, df = 98, t.ratio = -0.8822891, p.value = 0.3797795
@@ -25,7 +25,7 @@
         result = anova(data, :dv, :subject, between = [:BF1])
         em = emmeans(result, adjust = :none)
         # Filter for BF1 effect
-        em_bf1 = EmmeansResult(em.means[em.means.Effect.=="BF1", :], em.anova, em.level)
+        em_bf1 = EmmeansResult(em.means[em.means.Effect.=="BF1", :], em.anova, em.level, nothing)
         pairs_result = pairwise(em_bf1, adjust = :none)
 
         # R output: 3 comparisons
@@ -70,7 +70,7 @@
         result = anova(data, :dv, :subject, between = [:BF1])
         em = emmeans(result, adjust = :none)
         # Filter for BF1 effect
-        em_bf1 = EmmeansResult(em.means[em.means.Effect.=="BF1", :], em.anova, em.level)
+        em_bf1 = EmmeansResult(em.means[em.means.Effect.=="BF1", :], em.anova, em.level, nothing)
         pairs_result = pairwise(em_bf1, adjust = :bonferroni)
 
         # R output: p-values adjusted with bonferroni
@@ -98,7 +98,7 @@
         result = anova(data, :dv, :subject, between = [:BF1])
         em = emmeans(result, adjust = :none)
         # Filter for BF1 effect
-        em_bf1 = EmmeansResult(em.means[em.means.Effect.=="BF1", :], em.anova, em.level)
+        em_bf1 = EmmeansResult(em.means[em.means.Effect.=="BF1", :], em.anova, em.level, nothing)
         pairs_result = pairwise(em_bf1, adjust = :sidak)
 
         # Sidak adjustment: p_adj = 1 - (1 - p)^n
@@ -131,7 +131,7 @@
         result = anova(data, :dv, :subject, within = [:WF1])
         em = emmeans(result, adjust = :none)
         # Filter for WF1 effect
-        em_wf1 = EmmeansResult(em.means[em.means.Effect.=="WF1", :], em.anova, em.level)
+        em_wf1 = EmmeansResult(em.means[em.means.Effect.=="WF1", :], em.anova, em.level, nothing)
         pairs_result = pairwise(em_wf1, adjust = :none)
 
         # R output: contrast = F1_L1 - F1_L2, estimate = 0.05396951, SE = 0.1516794, df = 99, t.ratio = 0.355, p.value = 0.7227
@@ -157,7 +157,7 @@
 
         # For BF2 = G2_L1: filter rows where Level contains "G2_L1"
         bf2_g2_l1_data = filter(row -> occursin("G2_L1", row.Level), interaction_data)
-        em_bf1_g2_l1 = EmmeansResult(bf2_g2_l1_data, em.anova, em.level)
+        em_bf1_g2_l1 = EmmeansResult(bf2_g2_l1_data, em.anova, em.level, nothing)
         pairs_g2_l1 = pairwise(em_bf1_g2_l1, adjust = :none)
 
         # R output: BF2 = G2_L1: G1_L1 - G1_L2, estimate = -0.371267, SE = 0.262125, df = 96, t.ratio = -1.416374, p.value = 0.1599028
@@ -173,7 +173,7 @@
 
         # For BF2 = G2_L2: filter rows where Level contains "G2_L2"
         bf2_g2_l2_data = filter(row -> occursin("G2_L2", row.Level), interaction_data)
-        em_bf1_g2_l2 = EmmeansResult(bf2_g2_l2_data, em.anova, em.level)
+        em_bf1_g2_l2 = EmmeansResult(bf2_g2_l2_data, em.anova, em.level, nothing)
         pairs_g2_l2 = pairwise(em_bf1_g2_l2, adjust = :none)
 
         # R output: BF2 = G2_L2: G1_L1 - G1_L2, estimate = -0.4089487, SE = 0.262125, df = 96, t.ratio = -1.560129, p.value = 0.1220201
@@ -192,7 +192,7 @@
         data = CSV.read(joinpath(TEST_DATA_DIR, "data_within_3.csv"), DataFrame)
         result = anova(data, :dv, :subject, within = [:WF1])
         em = emmeans(result, adjust = :none)
-        em_wf1 = EmmeansResult(em.means[em.means.Effect.=="WF1", :], em.anova, em.level)
+        em_wf1 = EmmeansResult(em.means[em.means.Effect.=="WF1", :], em.anova, em.level, nothing)
         pairs_result = pairwise(em_wf1, adjust = :bonferroni)
 
         # R output: 3 comparisons with bonferroni adjustment
@@ -238,7 +238,7 @@
         em = emmeans(result, adjust = :none)
         # Filter for WF1 × WF2 interaction effect
         interaction_data = em.means[em.means.Effect.=="WF1 × WF2", :]
-        em_interaction = EmmeansResult(interaction_data, em.anova, em.level)
+        em_interaction = EmmeansResult(interaction_data, em.anova, em.level, nothing)
         pairs_result = pairwise(em_interaction, adjust = :none)
 
         # R output: 2 comparisons (one for each level of WF2)
@@ -267,7 +267,7 @@
         result = anova(data, :dv, :subject, within = [:WF1, :WF2])
         em = emmeans(result, adjust = :none)
         interaction_data = em.means[em.means.Effect.=="WF1 × WF2", :]
-        em_interaction = EmmeansResult(interaction_data, em.anova, em.level)
+        em_interaction = EmmeansResult(interaction_data, em.anova, em.level, nothing)
         pairs_result = pairwise(em_interaction, adjust = :bonferroni)
 
         # R output: same estimates but adjusted p-values
@@ -286,7 +286,7 @@
         result = anova(data, :dv, :subject, within = [:WF1, :WF2])
         em = emmeans(result, adjust = :none)
         interaction_data = em.means[em.means.Effect.=="WF1 × WF2", :]
-        em_interaction = EmmeansResult(interaction_data, em.anova, em.level)
+        em_interaction = EmmeansResult(interaction_data, em.anova, em.level, nothing)
         pairs_result = pairwise(em_interaction, adjust = :none)
 
         # R output: 3 comparisons
@@ -312,7 +312,7 @@
         result = anova(data, :dv, :subject, within = [:WF1, :WF2])
         em = emmeans(result, adjust = :none)
         interaction_data = em.means[em.means.Effect.=="WF1 × WF2", :]
-        em_interaction = EmmeansResult(interaction_data, em.anova, em.level)
+        em_interaction = EmmeansResult(interaction_data, em.anova, em.level, nothing)
         pairs_result = pairwise(em_interaction, adjust = :bonferroni)
 
         # R output: same estimates but adjusted p-values
@@ -331,7 +331,7 @@
         result = anova(data, :dv, :subject, within = [:WF1, :WF2, :WF3])
         em = emmeans(result, adjust = :none)
         interaction_data = em.means[em.means.Effect.=="WF1 × WF2 × WF3", :]
-        em_interaction = EmmeansResult(interaction_data, em.anova, em.level)
+        em_interaction = EmmeansResult(interaction_data, em.anova, em.level, nothing)
         pairs_result = pairwise(em_interaction, adjust = :none)
 
         # R output: multiple comparisons
@@ -357,7 +357,7 @@
         result = anova(data, :dv, :subject, within = [:WF1, :WF2, :WF3])
         em = emmeans(result, adjust = :none)
         interaction_data = em.means[em.means.Effect.=="WF1 × WF2 × WF3", :]
-        em_interaction = EmmeansResult(interaction_data, em.anova, em.level)
+        em_interaction = EmmeansResult(interaction_data, em.anova, em.level, nothing)
         pairs_result = pairwise(em_interaction, adjust = :bonferroni)
 
         # R output: same estimates but adjusted p-values
@@ -376,7 +376,7 @@
         result = anova(data, :dv, :subject, within = [:WF1], between = [:BF1])
         em = emmeans(result, adjust = :none)
         interaction_data = em.means[em.means.Effect.=="BF1 × WF1", :]
-        em_interaction = EmmeansResult(interaction_data, em.anova, em.level)
+        em_interaction = EmmeansResult(interaction_data, em.anova, em.level, nothing)
         pairs_result = pairwise(em_interaction, adjust = :none)
 
         # R output: 2 comparisons
@@ -402,7 +402,7 @@
         result = anova(data, :dv, :subject, within = [:WF1], between = [:BF1])
         em = emmeans(result, adjust = :none)
         interaction_data = em.means[em.means.Effect.=="BF1 × WF1", :]
-        em_interaction = EmmeansResult(interaction_data, em.anova, em.level)
+        em_interaction = EmmeansResult(interaction_data, em.anova, em.level, nothing)
         pairs_result = pairwise(em_interaction, adjust = :bonferroni)
 
         # R output: same estimates but adjusted p-values
@@ -421,7 +421,7 @@
         result = anova(data, :dv, :subject, within = [:WF1], between = [:BF1])
         em = emmeans(result, adjust = :none)
         interaction_data = em.means[em.means.Effect.=="BF1 × WF1", :]
-        em_interaction = EmmeansResult(interaction_data, em.anova, em.level)
+        em_interaction = EmmeansResult(interaction_data, em.anova, em.level, nothing)
         pairs_result = pairwise(em_interaction, adjust = :none)
 
         # R output: multiple comparisons
@@ -447,7 +447,7 @@
         result = anova(data, :dv, :subject, within = [:WF1], between = [:BF1])
         em = emmeans(result, adjust = :none)
         interaction_data = em.means[em.means.Effect.=="BF1 × WF1", :]
-        em_interaction = EmmeansResult(interaction_data, em.anova, em.level)
+        em_interaction = EmmeansResult(interaction_data, em.anova, em.level, nothing)
         pairs_result = pairwise(em_interaction, adjust = :bonferroni)
 
         # R output: same estimates but adjusted p-values
@@ -466,7 +466,7 @@
         result = anova(data, :dv, :subject, within = [:WF1, :WF2], between = [:BF1])
         em = emmeans(result, adjust = :none)
         interaction_data = em.means[em.means.Effect.=="BF1 × WF1 × WF2", :]
-        em_interaction = EmmeansResult(interaction_data, em.anova, em.level)
+        em_interaction = EmmeansResult(interaction_data, em.anova, em.level, nothing)
         pairs_result = pairwise(em_interaction, adjust = :none)
 
         # R output: multiple comparisons
@@ -481,7 +481,7 @@
         result = anova(data, :dv, :subject, within = [:WF1, :WF2], between = [:BF1])
         em = emmeans(result, adjust = :none)
         interaction_data = em.means[em.means.Effect.=="BF1 × WF1 × WF2", :]
-        em_interaction = EmmeansResult(interaction_data, em.anova, em.level)
+        em_interaction = EmmeansResult(interaction_data, em.anova, em.level, nothing)
         pairs_result = pairwise(em_interaction, adjust = :bonferroni)
 
         # R output: same estimates but adjusted p-values
@@ -495,7 +495,7 @@
         result = anova(data, :dv, :subject, between = [:BF1])
         em = emmeans(result, adjust = :none)
         # Filter for BF1 effect
-        em_bf1 = EmmeansResult(em.means[em.means.Effect.=="BF1", :], em.anova, em.level)
+        em_bf1 = EmmeansResult(em.means[em.means.Effect.=="BF1", :], em.anova, em.level, nothing)
         pairs_result = pairwise(em_bf1, adjust = :sidak)
 
         # Sidak adjustment: p_adj = 1 - (1 - p)^n
@@ -540,7 +540,7 @@
             @test nrow(interaction_data) > 0
 
             # Get pairwise comparisons for the interaction
-            em_interaction = EmmeansResult(interaction_data, em.anova, em.level)
+            em_interaction = EmmeansResult(interaction_data, em.anova, em.level, nothing)
             pairs_result = pairwise(em_interaction, adjust = :none)
 
             # Should have comparisons

@@ -294,6 +294,7 @@ Results from estimated marginal means computation.
   - `Upper`: Upper bound of confidence interval
 - `anova::AnovaResult`: The original ANOVA result object used to compute the means
 - `level::Float64`: Confidence level used for intervals (e.g., 0.95 for 95% CI)
+- `group::Union{Vector{Symbol}, Nothing}`: Grouping factors (if specified via `group` parameter)
 
 Note: The original data can be accessed via `result.anova.data`.
 
@@ -304,16 +305,18 @@ em = emmeans(result)
 em.means  # Access marginal means table
 em.level  # Get confidence level (e.g., 0.95)
 em.anova  # Access original ANOVA result
+em = emmeans(result, by=[:time, :condition], group=:condition)  # Grouped display
 ```
 """
 struct EmmeansResult
     means::DataFrame
     anova::AnovaResult
     level::Float64
+    group::Union{Vector{Symbol},Nothing}
 end
 
 # Custom show method for EmmeansResult
-Base.show(io::IO, ::MIME"text/plain", em::EmmeansResult) = emmeans_table(em);
+Base.show(io::IO, ::MIME"text/plain", em::EmmeansResult) = emmeans_table(em; io=io);
 
 # Compact printing (for arrays, etc.)
 Base.show(io::IO, em::EmmeansResult) = print(io, "EmmeansResult (level = $(em.level))")

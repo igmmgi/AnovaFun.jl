@@ -1,5 +1,5 @@
 """
-    emmeans(result::AnovaResult; by=nothing, level=0.95, adjust=:none)
+    emmeans(result::AnovaResult; by=nothing, group=nothing, level=0.95, adjust=:none)
 
 Compute estimated marginal means from an ANOVA result.
 This method uses the data stored in the result object.
@@ -9,6 +9,10 @@ This method uses the data stored in the result object.
 - `by::Union{Vector{Symbol}, Nothing}`: Effect(s) to compute marginal means for. 
   - `nothing` (default): Compute marginal means for all effects (all factors and their interactions)
   - `Vector{Symbol}`: Compute marginal means for an interaction (e.g., `[:time, :condition]`)
+- `group::Union{Symbol, Vector{Symbol}, Nothing}`: Factor(s) to group results by for display. 
+  - `nothing` (default): Show all results in a single table
+  - `Symbol` or `Vector{Symbol}`: Group results by these factors (must be a subset of `by` factors)
+  - When `group` is specified, results are displayed in separate sections for each group combination
 - `level::Float64`: Confidence level for confidence intervals (default: 0.95 for 95% CI)
 - `adjust::Symbol`: Method for confidence interval adjustment. Options: `:none` (default), `:bonferroni`, or `:sidak`
 
@@ -17,6 +21,7 @@ An `EmmeansResult` object containing:
 - `means::DataFrame`: Marginal means table with columns Effect, Level, N, Mean, SD, SE, Lower, Upper
 - `anova::AnovaResult`: The original ANOVA result object
 - `level::Float64`: Confidence level used for intervals
+- `group::Union{Vector{Symbol}, Nothing}`: Grouping factors (if specified)
 
 Note: The original data can be accessed via `result.anova.data`.
 
@@ -26,12 +31,14 @@ result = anova(data, :dv, :id, within=[:time])
 em = emmeans(result)                               # all effects
 em = emmeans(result, by=:time)                     # single factor
 em = emmeans(result, by=[:time, :condition])       # interaction
+em = emmeans(result, by=[:time, :condition], group=:condition)  # grouped by condition
 em = emmeans(result, by=:time, adjust=:bonferroni) # with correction
 ```
 """
 function emmeans(
     result::AnovaResult;
     by::Union{Vector{Symbol},Nothing} = nothing,
+    group::Union{Symbol,Vector{Symbol},Nothing} = nothing,
     level::Float64 = 0.95,
     adjust::Symbol = :none,
 )
@@ -55,6 +62,27 @@ function emmeans(
         requested_set = Set(by)
         remaining_factors = [f for f in all_factors_list if f ∉ requested_set]
         all_factors_list = vcat(by, remaining_factors)
+    end
+
+    # Normalize group parameter (convert single Symbol to Vector)
+    group_normalized = if isnothing(group)
+        nothing
+    elseif group isa Symbol
+        [group]
+    else
+        group
+    end
+    
+    # Validate group parameter
+    if !isnothing(group_normalized)
+        if isnothing(by)
+            throw(ArgumentError("group parameter requires by to be specified"))
+        end
+        group_set = Set(group_normalized)
+        by_set = Set(by)
+        if !issubset(group_set, by_set)
+            throw(ArgumentError("group factors must be a subset of by factors. by: $(by), group: $(group_normalized)"))
+        end
     end
 
     # DataFrame for marginal means 
@@ -177,7 +205,7 @@ function emmeans(
         end
     end
 
-    return EmmeansResult(means_data, result, level)
+    return EmmeansResult(means_data, result, level, group_normalized)
 end
 
 function _grand_mean(data::DataFrame, dv::Symbol, n_id::Int, level::Float64)

@@ -406,10 +406,17 @@ function _calculate_global_ylimits(
                 append!(y_values, raw_vals)
 
                 # Add KDE extent/whisker estimates for violin/boxplot-like plots
-                plot_type in [:violin, :raincloud_custom, :raincloud_custom_2x2] &&
-                    _add_kde_extent!(y_values, raw_vals, plot_kwargs)
-                plot_type in [:boxplot, :raincloud] &&
+                # For violin plots (including in raincloud), only add KDE extent if datalimits is not extrema
+                if plot_type in [:violin, :raincloud_custom, :raincloud_custom_2x2]
+                    violin_datalimits = plot_kwargs[:violin_datalimits]
+                    if violin_datalimits != extrema
+                        _add_kde_extent!(y_values, raw_vals, plot_kwargs)
+                    end
+                end
+                
+                if plot_type in [:boxplot, :raincloud]
                     _add_whisker_extents!(y_values, raw_vals, plot_kwargs)
+                end
             end
         end
     end

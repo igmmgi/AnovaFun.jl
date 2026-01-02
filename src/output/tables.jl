@@ -134,7 +134,7 @@ function emmeans_table(
     backend ∉ backends &&
         throw(ArgumentError("backend must be one of: $(join(backends, ", "))."))
 
-    mm_table = copy(result.means)
+    # Set up table format (common for both grouped and ungrouped)
     if backend == :latex
         tf = LatexTableFormat(; @latex__no_vertical_lines)
     elseif backend == :markdown
@@ -143,21 +143,123 @@ function emmeans_table(
         tf = TextTableFormat(; @text__no_vertical_lines)
     end
 
-    # Format decimal places
+    # Format map (common for both grouped and ungrouped)
     emmeans_format_map = Dict(:Mean => 2, :SD => 2, :SE => 2, :Lower => 2, :Upper => 2)
-    _format_columns!(mm_table, emmeans_format_map)
 
-    return pretty_table(
-        io,
-        mm_table,
-        backend = backend,
-        title = title,
-        show_column_labels = true,
-        column_labels = names(mm_table),
-        table_format = tf,
-    )
+    # If grouping is specified, display grouped output
+    if !isnothing(result.group)
+        group_data = _group_emmeans_data(result.means, result.group)
+        
+        # Display each group (sort by group key for consistent ordering)
+        sorted_group_keys = sort(collect(keys(group_data)))
+        first_group = true
+        for group_key in sorted_group_keys
+            group_df = group_data[group_key]
+            _format_columns!(group_df, emmeans_format_map)
+            
+            # Create title with group information
+            group_info = "(" * join([string(result.group[i]) * " = " * group_key[i] for i in 1:length(result.group)], ", ") * ")"
+            group_title = title * " " * group_info
+            
+            !first_group && println(io)
+            
+            pretty_table(
+                io,
+                group_df,
+                backend = backend,
+                title = group_title,
+                show_column_labels = true,
+                column_labels = names(group_df),
+                table_format = tf,
+            )
+            
+            first_group = false
+        end
+    else # Standard (ungrouped) display
+        mm_table = copy(result.means)
+        _format_columns!(mm_table, emmeans_format_map)
+
+        pretty_table(
+            io,
+            mm_table,
+            backend = backend,
+            title = title,
+            show_column_labels = true,
+            column_labels = names(mm_table),
+            table_format = tf,
+        )
+    end
+    
+    # println(io)
+    println(io, "Confidence level used: $(result.level)")
+    
+    return nothing
 end
 
+
+"""
+    _group_emmeans_data(means_table, group_factors)
+
+Group emmeans data by specified factors, returning a Dict mapping group combinations to DataFrames.
+Modifies Effect and Level columns to exclude grouped factors.
+"""
+function _group_emmeans_data(means_table::DataFrame, group_factors::Vector{Symbol})
+    
+    effect_name = first(unique(means_table.Effect))
+    effect_factors = Symbol.(strip.(split(effect_name, " × ")))
+    
+    # Find indices of group factors and remaining factors
+    group_indices = [findfirst(==(f), effect_factors) for f in group_factors]
+    remaining_factors = [f for f in effect_factors if f ∉ group_factors]
+    remaining_indices = [findfirst(==(f), effect_factors) for f in remaining_factors]
+    
+    # Group data by group factor combinations
+    group_data = Dict{Tuple{Vararg{String}}, DataFrame}()
+    
+    for row in eachrow(means_table)
+        level_parts = strip.(split(row.Level, ","))
+        length(level_parts) != length(effect_factors) && continue  # Skip Grand Mean, etc.
+        
+        # Extract group and remaining values
+        group_values = [level_parts[i] for i in group_indices]
+        remaining_values = length(remaining_indices) > 0 ? [level_parts[i] for i in remaining_indices] : String[]
+        
+        # Create modified row (Effect and Level exclude grouped factors)
+        new_effect = length(remaining_factors) > 0 ? join(string.(remaining_factors), " × ") : ""
+        new_level = length(remaining_values) > 0 ? join(remaining_values, ", ") : ""
+        
+        new_row = (
+            Effect = new_effect,
+            Level = new_level,
+            N = row.N,
+            Mean = row.Mean,
+            SD = row.SD,
+            SE = row.SE,
+            Lower = row.Lower,
+            Upper = row.Upper,
+            error = row.error,
+        )
+        
+        # Store in grouped dictionary
+        group_key = tuple(group_values...)
+        if !haskey(group_data, group_key)
+            group_data[group_key] = DataFrame(
+                Effect = String[],
+                Level = String[],
+                N = Int[],
+                Mean = Float64[],
+                SD = Float64[],
+                SE = Float64[],
+                Lower = Float64[],
+                Upper = Float64[],
+                error = Float64[],
+            )
+        end
+        push!(group_data[group_key], new_row)
+    end
+    
+    return group_data
+end
 
 """
     pairwise_table(result::PairwiseResult; backend=:text, title="Pairwise Comparisons", io=stdout)
