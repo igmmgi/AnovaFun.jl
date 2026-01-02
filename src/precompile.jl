@@ -50,11 +50,9 @@ PrecompileTools.@compile_workload begin
     res_within.id
     model(res_within)
 
-    # Precompile table functions
-    println("Precompiling table functions 1")
-    anova_table(res_within)
-    println("Precompiling table functions 2")
-    emmeans_table(em_within)
+    # Precompile table functions (suppress output during precompilation)
+    anova_table(res_within; io=devnull);
+    emmeans_table(em_within; io=devnull);
 
     # Precompile helper functions
     p(0.05)
@@ -67,53 +65,9 @@ PrecompileTools.@compile_workload begin
     ci(em_within, "WF1", "F1_L1")
     m_ci(em_within, "WF1", "F1_L1")
 
-    # Precompile plot_anova with AnovaResult
-    plot_anova(res_within, x_grouping = :WF1)
-    plot_anova(res_within_2x2, x_grouping = :WF1, y_grouping = :WF2)
-    plot_anova(res_mixed, x_grouping = :WF1, y_grouping = :BF1)
-    plot_anova(res_mixed, x_grouping = :WF1, facet_cols = :BF1)
-    plot_anova(res_within, x_grouping = :WF1, individual_data = :none)
-    plot_anova(res_within, x_grouping = :WF1, individual_data = :points)
-    plot_anova(res_within, x_grouping = :WF1, individual_data = :connected_points)
-
-    # Precompile plot_anova with EmmeansResult
-    plot_anova(em_within, x_grouping = :WF1)
-    plot_anova(em_within_2x2, x_grouping = :WF1, y_grouping = :WF2)
-    plot_anova(em_mixed, x_grouping = :WF1, y_grouping = :BF1)
-
-    # Precompile different plot types
-    plot_anova(em_within, x_grouping = :WF1, plot_type = :line)
-    plot_anova(em_within, x_grouping = :WF1, plot_type = :boxplot)
-    plot_anova(em_within, x_grouping = :WF1, plot_type = :violin)
-    plot_anova(em_within, x_grouping = :WF1, plot_type = :bar)
-    plot_anova(em_within, x_grouping = :WF1, plot_type = :raincloud)
-    plot_anova(em_within, x_grouping = :WF1, plot_type = :raincloud_custom)
-    plot_anova(
-        em_within,
-        x_grouping = :WF1,
-        plot_type = :raincloud_custom,
-        individual_data = :connected_points,
-    )
-    plot_anova(
-        em_within_2x2,
-        x_grouping = :WF1,
-        y_grouping = :WF2,
-        plot_type = :raincloud_custom_2x2,
-    )
-    plot_anova(
-        em_within_2x2,
-        x_grouping = :WF1,
-        y_grouping = :WF2,
-        plot_type = :raincloud_custom_2x2,
-        individual_data = :connected_points,
-    )
-
-    # Precompile error bar options
-    plot_anova(em_within, x_grouping = :WF1, errorbars = :SE)
-    plot_anova(em_within, x_grouping = :WF1, errorbars = :CI)
-    plot_anova(em_within, x_grouping = :WF1, errorbars = :withinSE)
-    plot_anova(em_within, x_grouping = :WF1, errorbars = :withinCI)
-    plot_anova(em_within, x_grouping = :WF1, errorbars = :none)
+    # Precompile plot_anova - minimal set to cover main code paths
+    plot_anova(em_within, x_grouping = :WF1)  # Basic 1D plot with EmmeansResult
+    plot_anova(em_within_2x2, x_grouping = :WF1, y_grouping = :WF2)  # Basic 2D plot
 
     # Precompile sphericity and homogeneity checks
     sphericity_check(res_within)

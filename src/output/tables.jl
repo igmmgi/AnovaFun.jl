@@ -87,7 +87,7 @@ function anova_table(
         footnotes = nothing
     end
 
-    pretty_table(
+    return pretty_table(
         io,
         aov_table,
         backend = backend,
@@ -147,7 +147,7 @@ function emmeans_table(
     emmeans_format_map = Dict(:Mean => 2, :SD => 2, :SE => 2, :Lower => 2, :Upper => 2)
     _format_columns!(mm_table, emmeans_format_map)
 
-    pretty_table(
+    return pretty_table(
         io,
         mm_table,
         backend = backend,
@@ -221,7 +221,7 @@ function pairwise_table(
     )
     _format_columns!(pw_table, pairwise_format_map; special_cases = pairwise_special_cases)
 
-    pretty_table(
+    return pretty_table(
         io,
         pw_table,
         backend = backend,
