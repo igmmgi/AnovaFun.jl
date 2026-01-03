@@ -4,6 +4,7 @@
 [![Build Status](https://github.com/igmmgi/AnovaFun.jl/workflows/Documentation/badge.svg)](https://github.com/igmmgi/AnovaFun.jl/actions)
 [![CI](https://github.com/igmmgi/AnovaFun.jl/workflows/Tests/badge.svg)](https://github.com/igmmgi/AnovaFun.jl/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![DOI](https://zenodo.org/badge/1115641719.svg)](https://doi.org/10.5281/zenodo.18139228)
 
 A Julia package for analysis of factorial experiments, including repeated measures (within-subjects), between-subjects, and mixed designs, inspired by the R packages afex, ez and emmeans.
 
