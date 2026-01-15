@@ -51,8 +51,8 @@ PrecompileTools.@compile_workload begin
     model(res_within)
 
     # Precompile table functions (suppress output during precompilation)
-    anova_table(res_within; io=devnull);
-    emmeans_table(em_within; io=devnull);
+    anova_table(res_within; io = devnull)
+    emmeans_table(em_within; io = devnull)
 
     # Precompile helper functions
     p(0.05)

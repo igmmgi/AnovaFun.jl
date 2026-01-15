@@ -15,7 +15,7 @@ using Distributions: FDist, TDist, Chisq, MvNormal, cdf, quantile
 using GLM
 using LinearAlgebra
 using Logging
-using Makie # Import Makie - backends are loaded/activated by users
+using Makie
 using PrettyTables
 using Printf
 using Random
@@ -40,7 +40,7 @@ export factors, between_factors, within_factors, n_id, n_effects, design_type, m
 export simulate_data, power_analysis, sample_size, within_correlation_matrix
 
 # TODO: is there a better way to do this? But for now, seems to work fine,
-# and as it is such a small dataset other solutions seem overkill!
+# and as it is such a small dataset other, solutions seem overkill!
 const ExampleData = joinpath(@__DIR__, "..", "test", "test_data", "dat.csv")
 
 # source files
@@ -50,11 +50,11 @@ include("types/types.jl")
 include("utils/utils.jl")
 
 # ANOVA computation
-include("anova/constants.jl")  
-include("anova/validation.jl")  
+include("anova/constants.jl")
+include("anova/validation.jl")
 include("anova/ttests.jl")
 include("anova/anovas.jl")
-include("anova/anovas_between.jl")  
+include("anova/anovas_between.jl")
 include("anova/anovas_within.jl")
 include("anova/anovas_mixed.jl")
 include("anova/homogeneity.jl")
@@ -74,20 +74,20 @@ include("output/report.jl")
 include("output/tables.jl")
 
 # Plotting
-include("plotting/plot_types.jl")  
-include("plotting/plot_config.jl")  
-include("plotting/plot_utils.jl")  
-include("plotting/plot_data.jl")  
-include("plotting/plot_facets.jl")  
-include("plotting/plot_preparation.jl")  
-include("plotting/plot_panels.jl")  
-include("plotting/plot_postprocessing.jl")  
-include("plotting/plot.jl")  
-include("plotting/primitives/common.jl")  
-include("plotting/primitives/distribution_base.jl")  
-include("plotting/primitives/line_bar.jl")  
-include("plotting/primitives/violin.jl")  
-include("plotting/primitives/boxplot.jl")  
+include("plotting/plot_types.jl")
+include("plotting/plot_config.jl")
+include("plotting/plot_utils.jl")
+include("plotting/plot_data.jl")
+include("plotting/plot_facets.jl")
+include("plotting/plot_preparation.jl")
+include("plotting/plot_panels.jl")
+include("plotting/plot_postprocessing.jl")
+include("plotting/plot.jl")
+include("plotting/primitives/common.jl")
+include("plotting/primitives/distribution_base.jl")
+include("plotting/primitives/line_bar.jl")
+include("plotting/primitives/violin.jl")
+include("plotting/primitives/boxplot.jl")
 include("plotting/primitives/component_renderer.jl")
 include("plotting/primitives/raincloud.jl")
 

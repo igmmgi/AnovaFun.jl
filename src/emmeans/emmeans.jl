@@ -72,7 +72,7 @@ function emmeans(
     else
         group
     end
-    
+
     # Validate group parameter
     if !isnothing(group_normalized)
         if isnothing(by)
@@ -81,7 +81,11 @@ function emmeans(
         group_set = Set(group_normalized)
         by_set = Set(by)
         if !issubset(group_set, by_set)
-            throw(ArgumentError("group factors must be a subset of by factors. by: $(by), group: $(group_normalized)"))
+            throw(
+                ArgumentError(
+                    "group factors must be a subset of by factors. by: $(by), group: $(group_normalized)",
+                ),
+            )
         end
     end
 

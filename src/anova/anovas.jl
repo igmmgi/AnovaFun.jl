@@ -116,24 +116,24 @@ function _inclusion_exclusion(factors::Vector{Symbol}, raw_ss_func::Function)
 end
 
 function _contrast_matrix(n_levels::Int)
-    C = zeros(n_levels, n_levels - 1)
+    contrast_matrix = zeros(n_levels, n_levels - 1)
     for i = 1:(n_levels-1)
-        C[i, i] = 1.0
-        C[n_levels, i] = -1.0
+        contrast_matrix[i, i] = 1.0
+        contrast_matrix[n_levels, i] = -1.0
     end
-    return C
+    return contrast_matrix
 end
 
-function _sspe(Y::Matrix{Float64})
-    Y_mean = mean(Y, dims = 1)
-    Y_centered = Y .- Y_mean
-    return Y_centered' * Y_centered
+function _sspe(y::Matrix{Float64})
+    y_mean = mean(y, dims = 1)
+    y_centered = y .- y_mean
+    return y_centered' * y_centered
 end
 
 function _multivariate_ssd(SSPE::Matrix{Float64}, P::Matrix{Float64})
-    PtP = P' * P
-    PtSSPE_P = P' * SSPE * P
-    return tr(PtSSPE_P * inv(PtP))
+    p_transpose_p = P' * P
+    projected_sspe = P' * SSPE * P
+    return tr(projected_sspe * inv(p_transpose_p))
 end
 
 
@@ -159,7 +159,7 @@ end
 
 function _push_result!(results, effect_name, df_n, df_d, ss_n, ss_d)
     mse = ss_d / df_d
-    F = (ss_n / df_n) / mse  
+    F = (ss_n / df_n) / mse
     p = 1.0 - cdf(FDist(df_n, df_d), F)
     push!(
         results,

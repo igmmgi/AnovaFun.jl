@@ -85,14 +85,11 @@ function _pairs(
 
     errors = select(anova.table, [:Effect, :DFn, :DFd, :MSE])
 
-    if isnothing(simple)
-        # Mode 1: All pairwise comparisons across all cell means
+    if isnothing(simple) # Mode 1: All pairwise comparisons across all cell means
         _process_all_pairwise!(results, means, errors, anova, adjust, level)
-    elseif simple == :each
-        # Mode 2: Simple contrasts for each factor
+    elseif simple == :each # Mode 2: Simple contrasts for each factor
         _process_simple_each!(results, means, errors, anova, adjust, level)
-    else
-        # Mode 3: Simple contrasts for specific factor
+    else # Mode 3: Simple contrasts for specific factor
         _process_simple_factor!(results, means, errors, anova, simple, adjust, level)
     end
 
@@ -533,22 +530,22 @@ _se_from_mse(mse::Float64, n_i::Int, n_j::Int)::Float64 = sqrt(mse * (1 / n_i + 
 # For simple effects: "F1_L1" -> Dict(:WF1 => "F1_L1")
 # For interactions: "F1_L1, G1_L1" -> Dict(:WF1 => "F1_L1", :BF1 => "G1_L1")
 function _parse_level_name(level_name::String, effect::String)
-    try
-        # Parse effect to get factor names
-        effect_factors = Symbol.(strip.(split(effect, " × ")))
+    # Parse effect to get factor names
+    factor_names = Symbol.(strip.(split(effect, " × ")))
 
-        # Parse level name
-        level_parts = strip.(split(level_name, ","))
+    # Parse level name into parts
+    level_parts = strip.(split(level_name, ","))
 
-        if length(level_parts) == length(effect_factors)
-            result = Dict{Symbol,String}()
-            for (i, factor) in enumerate(effect_factors)
-                result[factor] = strip(level_parts[i])
-            end
-            return result
-        end
-    catch
+    # Must have same number of parts as factors
+    if length(level_parts) != length(factor_names)
         return nothing
     end
-    return nothing
+
+    # Build dictionary mapping factors to their level values
+    factor_to_level = Dict{Symbol,String}()
+    for (factor, level_value) in zip(factor_names, level_parts)
+        factor_to_level[factor] = level_value
+    end
+
+    return factor_to_level
 end

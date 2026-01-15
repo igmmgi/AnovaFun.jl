@@ -413,7 +413,7 @@ function _calculate_global_ylimits(
                         _add_kde_extent!(y_values, raw_vals, plot_kwargs)
                     end
                 end
-                
+
                 if plot_type in [:boxplot, :raincloud]
                     _add_whisker_extents!(y_values, raw_vals, plot_kwargs)
                 end

@@ -1,14 +1,3 @@
-# ============================================================================
-# Constants
-# ============================================================================
-
-# Sphericity test constants
-const MIN_LEVELS_FOR_SPHERICITY = 3   # Minimum levels needed for meaningful sphericity test
-const MIN_DF_FOR_SPHERICITY = 2       # Minimum degrees of freedom for sphericity test
-const PERFECT_SPHERICITY_W = 1.0      # W statistic for perfect sphericity
-const PERFECT_SPHERICITY_P = 1.0      # p-value when sphericity holds perfectly
-
-
 """
     sphericity_check(result::AnovaResult)
 
@@ -122,36 +111,39 @@ function _mauchly_test(data::DataFrame, dv::Symbol, id::Symbol, factors::Vector{
     components = _get_sphericity_components(data, dv, id, factors)
     isnothing(components) && return PERFECT_SPHERICITY_W, PERFECT_SPHERICITY_P
 
-    U, pp, n, p_dim = components
+    u_matrix, n_contrasts, df, n_conditions = components
 
-    # Sphericity test requires at least 2 degrees of freedom (pp >= 2)
-    # For pp = 1 (2 levels), sphericity is automatically satisfied
-    if pp < MIN_DF_FOR_SPHERICITY
-        return PERFECT_SPHERICITY_W, PERFECT_SPHERICITY_P  # Sphericity automatically satisfied
+    # Sphericity test requires at least 2 degrees of freedom (n_contrasts >= 2)
+    # For n_contrasts = 1 (2 levels), sphericity is automatically satisfied
+    if n_contrasts < MIN_DF_FOR_SPHERICITY
+        return PERFECT_SPHERICITY_W, PERFECT_SPHERICITY_P  # Sphericity automatically satisfied (W=1.0, p=1.0)
     end
 
     # Compute W statistic
-    det_U = det(U)
-    trace_U = tr(U)
-    logW = log(det_U) - pp * log(trace_U / pp)
+    det_u = det(u_matrix)
+    trace_u = tr(u_matrix)
+    logW = log(det_u) - n_contrasts * log(trace_u / n_contrasts)
     W = exp(logW)
 
     # Compute p-value with Bartlett correction
-    # Formula from R's stats:::mauchly.test.SSD (also used in car package)
-    rho = 1.0 - (2 * pp^2 + pp + 2) / (6 * pp * n)
+    # Formula from R's stats:::mauchly.test.SSD 
+    rho = 1.0 - (2 * n_contrasts^2 + n_contrasts + 2) / (6 * n_contrasts * df)
 
     # w2 correction factor (second-order correction)
     w2 =
-        (pp + 2) * (pp - 1) * (pp - 2) * (2 * pp^3 + 6 * pp^2 + 3 * p_dim + 2) /
-        (288 * (n * pp * rho)^2)
+        (n_contrasts + 2) *
+        (n_contrasts - 1) *
+        (n_contrasts - 2) *
+        (2 * n_contrasts^3 + 6 * n_contrasts^2 + 3 * n_conditions + 2) /
+        (288 * (df * n_contrasts * rho)^2)
 
     # Test statistic (Bartlett-corrected chi-square approximation)
-    z = -n * rho * logW
+    z = -df * rho * logW
 
     # Degrees of freedom for chi-square test
-    f = pp * (pp + 1) / 2 - 1
+    f = n_contrasts * (n_contrasts + 1) / 2 - 1
 
-    # Ensure f > 0 (should be guaranteed by pp >= 2 check above, but double-check)
+    # Ensure f > 0 (should be guaranteed by n_contrasts >= 2 check above, but double-check)
     f <= 0 && return PERFECT_SPHERICITY_W, PERFECT_SPHERICITY_P
 
     # p-value with second-order correction
@@ -177,13 +169,14 @@ end
 
 function _build_contrast_matrix_for_effect(factors::Vector{Symbol}, levels::Vector, k::Int)
     length(factors) == 1 && return _contrast_matrix(k)
-    ns = length.(levels)
-    Cs = [_contrast_matrix(n) for n in ns]
-    P = Cs[1]
-    for i = 2:length(Cs)
-        P = kron(P, Cs[i])
+    n_levels_per_factor = length.(levels)
+    factor_contrast_matrices = [_contrast_matrix(n) for n in n_levels_per_factor]
+    combined_contrast_matrix = factor_contrast_matrices[1]
+    for i = 2:length(factor_contrast_matrices)
+        combined_contrast_matrix =
+            kron(combined_contrast_matrix, factor_contrast_matrices[i])
     end
-    return P
+    return combined_contrast_matrix
 end
 
 function _get_sphericity_components(
@@ -193,28 +186,30 @@ function _get_sphericity_components(
     factors::Vector{Symbol},
 )
     # Get unique subjects and condition levels
-    ids = sort(unique(data[!, id]))
-    levels = [sort(collect(unique(data[!, f]))) for f in factors]
-    k = prod(length.(levels))
+    subject_ids = sort(unique(data[!, id]))
+    factor_levels = [sort(collect(unique(data[!, f]))) for f in factors]
+    n_cells = prod(length.(factor_levels))
 
     # Sphericity test requires at least 3 levels/cells to be meaningful
-    k < MIN_LEVELS_FOR_SPHERICITY && return nothing
+    # For 2 levels, sphericity is automatically satisfied (returns nothing, handled in _mauchly_test)
+    n_cells < MIN_LEVELS_FOR_SPHERICITY && return nothing
 
     # Build data matrix and compute SSPE using unified function from utils.jl
-    data_matrix = _subject_condition_matrix(data, dv, id, factors; aggregate = true)
-    SSPE = _compute_SSPE(data_matrix)
+    subject_condition_matrix =
+        _subject_condition_matrix(data, dv, id, factors; aggregate = true)
+    sspe_matrix = _compute_SSPE(subject_condition_matrix)
 
     # Build contrast matrix and compute U
-    P = _build_contrast_matrix_for_effect(factors, levels, k)
-    SSD = P' * SSPE * P
-    Psi = P' * P
-    U = Psi \ SSD
+    contrast_matrix = _build_contrast_matrix_for_effect(factors, factor_levels, n_cells)
+    transformed_sspe = contrast_matrix' * sspe_matrix * contrast_matrix
+    p_transpose_p = contrast_matrix' * contrast_matrix
+    u_matrix = p_transpose_p \ transformed_sspe
 
-    pp = size(SSD, 1)
-    p_dim = size(P, 1)
-    n = length(ids) - 1
+    n_contrasts = size(transformed_sspe, 1)
+    n_conditions = size(contrast_matrix, 1)
+    df = length(subject_ids) - 1
 
-    return U, pp, n, p_dim
+    return u_matrix, n_contrasts, df, n_conditions
 end
 
 function _is_within_effect_in_table(effect_name::String, within_factors::Vector{Symbol})
@@ -228,21 +223,26 @@ function _is_within_effect_in_table(effect_name::String, within_factors::Vector{
     return !isempty(effect_factors) && all(f in within_factors for f in effect_factors)
 end
 
-function _compute_epsilon(U::Matrix{Float64}, pp::Int, n::Int, type::Symbol)
+function _compute_epsilon(
+    u_matrix::Matrix{Float64},
+    n_contrasts::Int,
+    df::Int,
+    type::Symbol,
+)
 
     # calculate GG epsilon as needed for both
-    tr_U = tr(U)
-    tr_U2 = sum(U .* U')
-    gg = tr_U^2 / (pp * tr_U2)
+    trace_u = tr(u_matrix)
+    sum_squared_elements = sum(u_matrix .* u_matrix')
+    gg_epsilon = trace_u^2 / (n_contrasts * sum_squared_elements)
 
-    type == :GG && return gg
+    type == :GG && return gg_epsilon
 
     # else must be HF
-    n_subj = n + 1
-    num = n_subj * pp * gg - 2
-    den = pp * (n_subj - 1 - pp * gg)
-    hf = num / den
-    return min(1.0, hf)  # Cap at 1.0
+    n_subjects = df + 1
+    numerator = n_subjects * n_contrasts * gg_epsilon - 2
+    denominator = n_contrasts * (n_subjects - 1 - n_contrasts * gg_epsilon)
+    hf_epsilon = numerator / denominator
+    return min(1.0, hf_epsilon)  # Cap at 1.0
 end
 
 function _sphericity_correction!(
@@ -279,8 +279,8 @@ function _sphericity_correction!(
             continue
         end
 
-        U, pp, n, _ = components
-        epsilon = _compute_epsilon(U, pp, n, type)
+        u_matrix, n_contrasts, df, _ = components
+        epsilon = _compute_epsilon(u_matrix, n_contrasts, df, type)
 
         # Apply corrections
         F = table[idx, :F]

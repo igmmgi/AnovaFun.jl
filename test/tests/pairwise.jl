@@ -4,7 +4,8 @@
         result = anova(data, :dv, :subject, between = [:BF1])
         em = emmeans(result, adjust = :none)
         # Filter for BF1 effect
-        em_bf1 = EmmeansResult(em.means[em.means.Effect.=="BF1", :], em.anova, em.level, nothing)
+        em_bf1 =
+            EmmeansResult(em.means[em.means.Effect.=="BF1", :], em.anova, em.level, nothing)
         pairs_result = pairwise(em_bf1, adjust = :none)
 
         # R output: contrast = G1_L1 - G1_L2, estimate = -0.1643506, SE = 0.1862775, df = 98, t.ratio = -0.8822891, p.value = 0.3797795
@@ -25,7 +26,8 @@
         result = anova(data, :dv, :subject, between = [:BF1])
         em = emmeans(result, adjust = :none)
         # Filter for BF1 effect
-        em_bf1 = EmmeansResult(em.means[em.means.Effect.=="BF1", :], em.anova, em.level, nothing)
+        em_bf1 =
+            EmmeansResult(em.means[em.means.Effect.=="BF1", :], em.anova, em.level, nothing)
         pairs_result = pairwise(em_bf1, adjust = :none)
 
         # R output: 3 comparisons
@@ -70,7 +72,8 @@
         result = anova(data, :dv, :subject, between = [:BF1])
         em = emmeans(result, adjust = :none)
         # Filter for BF1 effect
-        em_bf1 = EmmeansResult(em.means[em.means.Effect.=="BF1", :], em.anova, em.level, nothing)
+        em_bf1 =
+            EmmeansResult(em.means[em.means.Effect.=="BF1", :], em.anova, em.level, nothing)
         pairs_result = pairwise(em_bf1, adjust = :bonferroni)
 
         # R output: p-values adjusted with bonferroni
@@ -98,7 +101,8 @@
         result = anova(data, :dv, :subject, between = [:BF1])
         em = emmeans(result, adjust = :none)
         # Filter for BF1 effect
-        em_bf1 = EmmeansResult(em.means[em.means.Effect.=="BF1", :], em.anova, em.level, nothing)
+        em_bf1 =
+            EmmeansResult(em.means[em.means.Effect.=="BF1", :], em.anova, em.level, nothing)
         pairs_result = pairwise(em_bf1, adjust = :sidak)
 
         # Sidak adjustment: p_adj = 1 - (1 - p)^n
@@ -131,7 +135,8 @@
         result = anova(data, :dv, :subject, within = [:WF1])
         em = emmeans(result, adjust = :none)
         # Filter for WF1 effect
-        em_wf1 = EmmeansResult(em.means[em.means.Effect.=="WF1", :], em.anova, em.level, nothing)
+        em_wf1 =
+            EmmeansResult(em.means[em.means.Effect.=="WF1", :], em.anova, em.level, nothing)
         pairs_result = pairwise(em_wf1, adjust = :none)
 
         # R output: contrast = F1_L1 - F1_L2, estimate = 0.05396951, SE = 0.1516794, df = 99, t.ratio = 0.355, p.value = 0.7227
@@ -192,7 +197,8 @@
         data = CSV.read(joinpath(TEST_DATA_DIR, "data_within_3.csv"), DataFrame)
         result = anova(data, :dv, :subject, within = [:WF1])
         em = emmeans(result, adjust = :none)
-        em_wf1 = EmmeansResult(em.means[em.means.Effect.=="WF1", :], em.anova, em.level, nothing)
+        em_wf1 =
+            EmmeansResult(em.means[em.means.Effect.=="WF1", :], em.anova, em.level, nothing)
         pairs_result = pairwise(em_wf1, adjust = :bonferroni)
 
         # R output: 3 comparisons with bonferroni adjustment
@@ -495,7 +501,8 @@
         result = anova(data, :dv, :subject, between = [:BF1])
         em = emmeans(result, adjust = :none)
         # Filter for BF1 effect
-        em_bf1 = EmmeansResult(em.means[em.means.Effect.=="BF1", :], em.anova, em.level, nothing)
+        em_bf1 =
+            EmmeansResult(em.means[em.means.Effect.=="BF1", :], em.anova, em.level, nothing)
         pairs_result = pairwise(em_bf1, adjust = :sidak)
 
         # Sidak adjustment: p_adj = 1 - (1 - p)^n

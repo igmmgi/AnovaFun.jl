@@ -316,7 +316,7 @@ struct EmmeansResult
 end
 
 # Custom show method for EmmeansResult
-Base.show(io::IO, ::MIME"text/plain", em::EmmeansResult) = emmeans_table(em; io=io);
+Base.show(io::IO, ::MIME"text/plain", em::EmmeansResult) = emmeans_table(em; io = io);
 
 # Compact printing (for arrays, etc.)
 Base.show(io::IO, em::EmmeansResult) = print(io, "EmmeansResult (level = $(em.level))")
