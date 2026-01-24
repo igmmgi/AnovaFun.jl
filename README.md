@@ -8,7 +8,7 @@
 
 A Julia package for analysis of factorial experiments, including repeated measures (within-subjects), between-subjects, and mixed designs, inspired by the R packages afex, ez and emmeans.
 
-**Note**: This package implements a subset of features from the above packages, focused on common ANOVA analyses. It has been tested against R's aov, ezANOVA, afex, emmeans, and JASP's ANOVA interface.
+**Note**: This package implements a subset of features from the above packages, focused on common ANOVA analyses. It has been tested, albeit not exhaustively, against R's aov, ezANOVA, afex, emmeans, and JASP's ANOVA interface.
 
 ## Features
 
@@ -19,18 +19,15 @@ A Julia package for analysis of factorial experiments, including repeated measur
 - **Pairwise Comparisons** - Post-hoc tests with multiple comparison adjustments
 - **Sphericity Corrections** - Greenhouse-Geisser and Huynh-Feldt corrections
 - **Effect Sizes** - η² (eta squared), partial η², and ω² (omega squared)
-- **Power Analysis** - Simulation-based power analysis 
+- **Power Analysis** - Simulation-based power analysis
 - **Basic Plots** - Interactive plots via GLMakie or publication quality outputs via CairoMakie for ANOVA/emmeans results
 - **Output** - APA formatted tables and stats to latex, markdown, or text via PrettyTables
-
 
 ## Installation
 
 ```julia
 using Pkg
-# Pkg.add("AnovaFun")
-# but currently not registered so install via GitHub
-Pkg.add(url="https://github.com/igmmgi/AnovaFun.jl")
+Pkg.add("AnovaFun")
 ```
 
 ## Quick Reference
@@ -62,8 +59,9 @@ plot_anova(result, x_grouping = :factor1, y_grouping = :factor2, facet_cols = :f
 
 ```
 
-## Complete Example: 
-### 2 x 2 Within-Subjects Congruency Sequence Effect (CSE) 
+## Complete Example:
+
+### 2 x 2 Within-Subjects Congruency Sequence Effect (CSE)
 
 #### Step 1: Load and Preview Data
 
@@ -79,20 +77,21 @@ first(data, 10)
 ```
 
 | Subject | PreviousCongruency | CurrentCongruency | RT     |
-|---------|-------------------|------------------|--------|
-| 1       | Congruent         | Congruent        | 523.9  |
-| 1       | Congruent         | Incongruent      | 576.62 |
-| 1       | Incongruent       | Congruent        | 545.2  |
-| 1       | Incongruent       | Incongruent      | 567.1  |
-| 2       | Congruent         | Congruent        | 537.54 |
-| 2       | Congruent         | Incongruent      | 609.34 |
-| 2       | Incongruent       | Congruent        | 519.78 |
-| 2       | Incongruent       | Incongruent      | 548.78 |
+| ------- | ------------------ | ----------------- | ------ |
+| 1       | Congruent          | Congruent         | 523.9  |
+| 1       | Congruent          | Incongruent       | 576.62 |
+| 1       | Incongruent        | Congruent         | 545.2  |
+| 1       | Incongruent        | Incongruent       | 567.1  |
+| 2       | Congruent          | Congruent         | 537.54 |
+| 2       | Congruent          | Incongruent       | 609.34 |
+| 2       | Incongruent        | Congruent         | 519.78 |
+| 2       | Incongruent        | Incongruent       | 548.78 |
 
 **Dataset Summary:**
+
 - **N = 30 subjects** (each completing all conditions)
 - **Design**: 2×2 within-subjects (PreviousCongruency × CurrentCongruency)
-- **Dependent Variable**: Reaction time (RT) 
+- **Dependent Variable**: Reaction time (RT)
 - **Total observations**: 120 (30 subjects × 4 conditions)
 
 #### Step 2: Run the ANOVA
@@ -109,13 +108,13 @@ result # default show method
 result.table # for full anove table
 ```
 
-| Effect                            | DFn | DFd | F      | p      | sig¹ | η²ₚ  |
-|-----------------------------------|-----|-----|--------|--------|------|-------|
-| PreviousCongruency                | 1   | 29  | 0.04   | 0.838  | n.s. | 0.001 |
-| CurrentCongruency                 | 1   | 29  | 103.34 | < .001 | ***  | 0.781 |
-| PreviousCongruency × CurrentCongruency | 1   | 29  | 17.68 | < .001 | ***  | 0.379 |
+| Effect                                 | DFn | DFd | F      | p      | sig¹   | η²ₚ   |
+| -------------------------------------- | --- | --- | ------ | ------ | ------ | ----- |
+| PreviousCongruency                     | 1   | 29  | 0.04   | 0.838  | n.s.   | 0.001 |
+| CurrentCongruency                      | 1   | 29  | 103.34 | < .001 | \*\*\* | 0.781 |
+| PreviousCongruency × CurrentCongruency | 1   | 29  | 17.68  | < .001 | \*\*\* | 0.379 |
 
-¹: * = p < .05, ** = p < .01, *** = p < .001, n.s. = not significant
+¹: \* = p < .05, ** = p < .01, \*** = p < .001, n.s. = not significant
 
 #### Step 4: Estimated Marginal Means
 
@@ -124,17 +123,17 @@ result.table # for full anove table
 result_emm = emmeans(result)
 ```
 
-| Effect                            | Level                    | N  | Mean   | SE   | Lower | Upper | error  |
-|-----------------------------------|--------------------------|----|--------|------|-------|-------|--------|
-| Grand Mean                        | Overall                  | 30 | 551.33 | 3.73 | 543.7 | 558.96| 3.73   |
-| PreviousCongruency                | Congruent                | 30 | 550.94 | 3.80 | 543.2 | 558.68| 3.80   |
-| PreviousCongruency                | Incongruent              | 30 | 551.72 | 3.80 | 543.98| 559.46| 3.80   |
-| CurrentCongruency                 | Congruent                | 30 | 532.85 | 3.80 | 525.11| 540.59| 3.80   |
-| CurrentCongruency                 | Incongruent              | 30 | 569.82 | 3.80 | 562.08| 577.56| 3.80   |
-| PreviousCongruency × CurrentCongruency | Congruent, Congruent    | 30 | 524.08 | 5.37 | 513.1 | 535.06| 5.37   |
-| PreviousCongruency × CurrentCongruency | Congruent, Incongruent  | 30 | 577.80 | 5.37 | 566.82| 588.78| 5.37   |
-| PreviousCongruency × CurrentCongruency | Incongruent, Congruent  | 30 | 541.61 | 5.37 | 530.63| 552.59| 5.37   |
-| PreviousCongruency × CurrentCongruency | Incongruent, Incongruent| 30 | 561.83 | 5.37 | 550.85| 572.81| 5.37   |
+| Effect                                 | Level                    | N   | Mean   | SE   | Lower  | Upper  | error |
+| -------------------------------------- | ------------------------ | --- | ------ | ---- | ------ | ------ | ----- |
+| Grand Mean                             | Overall                  | 30  | 551.33 | 3.73 | 543.7  | 558.96 | 3.73  |
+| PreviousCongruency                     | Congruent                | 30  | 550.94 | 3.80 | 543.2  | 558.68 | 3.80  |
+| PreviousCongruency                     | Incongruent              | 30  | 551.72 | 3.80 | 543.98 | 559.46 | 3.80  |
+| CurrentCongruency                      | Congruent                | 30  | 532.85 | 3.80 | 525.11 | 540.59 | 3.80  |
+| CurrentCongruency                      | Incongruent              | 30  | 569.82 | 3.80 | 562.08 | 577.56 | 3.80  |
+| PreviousCongruency × CurrentCongruency | Congruent, Congruent     | 30  | 524.08 | 5.37 | 513.1  | 535.06 | 5.37  |
+| PreviousCongruency × CurrentCongruency | Congruent, Incongruent   | 30  | 577.80 | 5.37 | 566.82 | 588.78 | 5.37  |
+| PreviousCongruency × CurrentCongruency | Incongruent, Congruent   | 30  | 541.61 | 5.37 | 530.63 | 552.59 | 5.37  |
+| PreviousCongruency × CurrentCongruency | Incongruent, Incongruent | 30  | 561.83 | 5.37 | 550.85 | 572.81 | 5.37  |
 
 ### Step 5: Create Plots
 
@@ -163,6 +162,7 @@ plot_anova(result,
 ### Plot Examples
 
 #### Line Plot
+
 ```julia
 # Basic line plot
 plot_anova(result,
@@ -170,10 +170,11 @@ plot_anova(result,
            y_grouping = :PreviousCongruency,
            plot_type = :line)
 ```
+
 <img src="test/plot_anova_outputs/line/026_Example_2x2_data.png" width="500">
 
-
 #### Bar Plot
+
 ```julia
 # Bar plot with error bars
 plot_anova(result,
@@ -182,10 +183,11 @@ plot_anova(result,
            plot_type = :bar,
            errorbars = :SE)
 ```
+
 <img src="test/plot_anova_outputs/bar/026_Example_2x2_data.png" width="500">
 
-
 #### Raincloud Plot
+
 ```julia
 # Raincloud plot with distributions and points
 plot_anova(result,
@@ -193,10 +195,11 @@ plot_anova(result,
            y_grouping = :PreviousCongruency,
            plot_type = :raincloud)
 ```
+
 <img src="test/plot_anova_outputs/raincloud/023_Example_2x2_data.png" width="500">
 
-
 #### Box Plot
+
 ```julia
 # Box plot showing distributions
 plot_anova(result,
@@ -204,10 +207,11 @@ plot_anova(result,
            y_grouping = :PreviousCongruency,
            plot_type = :boxplot)
 ```
+
 <img src="test/plot_anova_outputs/boxplot/021_Example_2x2_data.png" width="500">
 
-
 #### Violin Plot
+
 ```julia
 # Violin plot with density estimates
 plot_anova(result,
@@ -215,10 +219,11 @@ plot_anova(result,
            y_grouping = :PreviousCongruency,
            plot_type = :violin)
 ```
+
 <img src="test/plot_anova_outputs/violin/024_Example_2x2_data.png" width="500">
 
-
 #### Custom Raincloud Plot with Connected Individual Points
+
 ```julia
 # Custom raincloud with connected individual points
 plot_anova(result,
@@ -227,9 +232,11 @@ plot_anova(result,
            plot_type = :raincloud_custom_2x2,
            connected_points = true)
 ```
+
 <img src="test/plot_anova_outputs/raincloud_custom_2x2/005_Connected_points.png" width="500">
 
 #### Custom Raincloud Plot
+
 ```julia
 # Additional custom raincloud configuration
 plot_anova(result,
@@ -237,12 +244,13 @@ plot_anova(result,
            y_grouping = :PreviousCongruency,
            plot_type = :raincloud_custom)
 ```
-<img src="test/plot_anova_outputs/raincloud_custom/031_Example_2x2_data.png" width="500">
 
+<img src="test/plot_anova_outputs/raincloud_custom/031_Example_2x2_data.png" width="500">
 
 #### Custom Theme Examples
 
 ##### Basic Custom Themes
+
 ```julia
 # Custom theme with teal/coral colors
 custom_theme = Theme(
@@ -256,8 +264,8 @@ fig = plot_anova(result,
     theme = custom_theme
 )
 ```
-<img src="test/plot_anova_outputs/raincloud_custom_2x2/002_Custom_theme.png" width="500">
 
+<img src="test/plot_anova_outputs/raincloud_custom_2x2/002_Custom_theme.png" width="500">
 
 ```julia
 # Using Makie's built-in ggplot2 theme
@@ -268,8 +276,8 @@ fig = plot_anova(result,
     theme = theme_ggplot2()
 )
 ```
-<img src="test/plot_anova_outputs/line/027_ggplot2_theme.png" width="500">
 
+<img src="test/plot_anova_outputs/line/027_ggplot2_theme.png" width="500">
 
 ```julia
 custom_theme = Theme(
@@ -279,7 +287,7 @@ custom_theme = Theme(
         ylabelsize = 24,
         xticklabelsize = 20,
         yticklabelsize = 20,
-        titlesize = 28 
+        titlesize = 28
     ),
     Legend = (
         labelsize = 18,
@@ -300,10 +308,11 @@ fig = plot_anova(result,
     legend_order = [:Incongruent, :Congruent]
 )
 ```
-<img src="test/plot_anova_outputs/bar/027_Custom_theme_1.png" width="500">
 
+<img src="test/plot_anova_outputs/bar/027_Custom_theme_1.png" width="500">
 
 ## Citation
 
 ## License
+
 MIT License
