@@ -27,13 +27,6 @@ jobs:
             Pkg.instantiate()
           '
       
-      - name: Install documentation dependencies
-        run: |
-          julia --project=docs/ -e '
-            using Pkg
-            Pkg.instantiate()
-          '
-
       - name: Build documentation
         run: |
           julia --project=docs/ docs/make.jl
