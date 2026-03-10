@@ -21,20 +21,20 @@ Also returns Cohen's dz (reported as `dz`).
   - `p`: p-value (returns `NaN` if `t` is `NaN`/`Inf`)
   - `dz`: Cohen's dz computed as mean(diff) / std(diff)
 """
-function paired_ttest(x::AbstractVector, y::AbstractVector; tail::Symbol = :both)
+function paired_ttest(x::AbstractVector, y::AbstractVector; tail::Symbol=:both)
 
     # validate equal lengths
     length(x) == length(y) || error("Paired t-test requires equal sample sizes")
 
     n = length(x)
-    n < 2 && return (df = NaN, t = NaN, p = NaN, dz = NaN)  # Need at least 2 observations
+    n < 2 && return (df=NaN, t=NaN, p=NaN, dz=NaN)  # Need at least 2 observations
 
     df = n - 1  # degrees of freedom for paired t-test
 
     # Compute mean and std of differences 
     diff = x .- y
     mean_diff = mean(diff)
-    std_diff = std(diff, corrected = true)  # Sample standard deviation (n-1)
+    std_diff = std(diff, corrected=true)  # Sample standard deviation (n-1)
 
     # Compute t-value
     if std_diff == 0.0
@@ -49,7 +49,7 @@ function paired_ttest(x::AbstractVector, y::AbstractVector; tail::Symbol = :both
 
     # Handle edge cases
     if isnan(t) || isinf(t)
-        return (df = df, t = t, p = NaN, dz = NaN)
+        return (df=df, t=t, p=NaN, dz=NaN)
     end
 
     # Effect size (Cohen's dz)
@@ -67,7 +67,7 @@ function paired_ttest(x::AbstractVector, y::AbstractVector; tail::Symbol = :both
         error("tail must be :both, :left, or :right, got :$tail")
     end
 
-    return (df = df, t = t, p = p, dz = dz)
+    return (df=df, t=t, p=p, dz=dz)
 end
 
 # INDEPENDENT T-TEST
@@ -90,7 +90,7 @@ Also returns Cohen's d (reported as `d`).
   - `p`: p-value (returns `NaN` if `t` is `NaN`/`Inf`)
   - `d`: Cohen's d using pooled SD
 """
-function independent_ttest(x::AbstractVector, y::AbstractVector; tail::Symbol = :both)
+function independent_ttest(x::AbstractVector, y::AbstractVector; tail::Symbol=:both)
 
     # Validate input lengths
     n_A, n_B = length(x), length(y)
@@ -103,8 +103,8 @@ function independent_ttest(x::AbstractVector, y::AbstractVector; tail::Symbol = 
     mean_x, mean_y = mean(x), mean(y)
 
     # Pooled variance (assuming equal variances)
-    var_x = var(x, corrected = true)
-    var_y = var(y, corrected = true)
+    var_x = var(x, corrected=true)
+    var_y = var(y, corrected=true)
     pooled_var = ((n_A - 1) * var_x + (n_B - 1) * var_y) / df
     pooled_sd = sqrt(pooled_var)
 
@@ -121,7 +121,7 @@ function independent_ttest(x::AbstractVector, y::AbstractVector; tail::Symbol = 
 
     # Handle edge cases
     if isnan(t) || isinf(t)
-        return (df = df, t = t, p = NaN, d = NaN)
+        return (df=df, t=t, p=NaN, d=NaN)
     end
 
     # Effect size (Cohen's d, pooled SD)
@@ -139,5 +139,70 @@ function independent_ttest(x::AbstractVector, y::AbstractVector; tail::Symbol = 
         error("tail must be :both, :left, or :right, got :$tail")
     end
 
-    return (df = df, t = t, p = p, d = d)
+    return (df=df, t=t, p=p, d=d)
+end
+
+# DATAFRAME DISPATCH METHODS
+"""
+    paired_ttest(df::DataFrame, col::Symbol; by::Symbol, levels = nothing, tail::Symbol = :both)
+
+Convenience method for paired t-test from a DataFrame.
+
+Splits `df` by the `by` column into exactly two groups and runs a paired t-test
+on the values in `col`.
+
+# Arguments
+- `df::DataFrame`: DataFrame containing the data
+- `col::Symbol`: Column to test
+- `by::Symbol`: Grouping column (must have exactly 2 unique values, or use `levels`)
+- `levels`: Optional vector of 2 values to select from `by` column (useful when >2 groups exist)
+- `tail::Symbol`: Type of test (`:both`, `:left`, or `:right`)
+
+# Examples
+```julia
+# Auto-detect two groups
+paired_ttest(df, :dv_col, by = :grouping_col)
+
+# Specify which two groups to compare
+paired_ttest(df, :dv_col, by = :grouping_col, levels = [1, 2])
+```
+"""
+function paired_ttest(df::DataFrame, col::Symbol; by::Symbol, levels=nothing, tail::Symbol=:both)
+    groups = isnothing(levels) ? sort(unique(df[!, by])) : levels
+    length(groups) == 2 || error("Expected 2 groups in column :$by, got $(length(groups)). Use `levels` to specify which pair to compare.")
+    x = df[df[!, by].==groups[1], col]
+    y = df[df[!, by].==groups[2], col]
+    return paired_ttest(x, y; tail=tail)
+end
+
+"""
+    independent_ttest(df::DataFrame, col::Symbol; by::Symbol, levels = nothing, tail::Symbol = :both)
+
+Convenience method for independent t-test from a DataFrame.
+
+Splits `df` by the `by` column into exactly two groups and runs an independent t-test
+on the values in `col`.
+
+# Arguments
+- `df::DataFrame`: DataFrame containing the data
+- `col::Symbol`: Column to test
+- `by::Symbol`: Grouping column (must have exactly 2 unique values, or use `levels`)
+- `levels`: Optional vector of 2 values to select from `by` column (useful when >2 groups exist)
+- `tail::Symbol`: Type of test (`:both`, `:left`, or `:right`)
+
+# Examples
+```julia
+# Auto-detect two groups
+independent_ttest(df, :dv_col, by = :grouping_col)
+
+# Specify which two groups to compare
+independent_ttest(df, :dv_col, by = :grouping_col, levels = [1, 2])
+```
+"""
+function independent_ttest(df::DataFrame, col::Symbol; by::Symbol, levels=nothing, tail::Symbol=:both)
+    groups = isnothing(levels) ? sort(unique(df[!, by])) : levels
+    length(groups) == 2 || error("Expected 2 groups in column :$by, got $(length(groups)). Use `levels` to specify which pair to compare.")
+    x = df[df[!, by].==groups[1], col]
+    y = df[df[!, by].==groups[2], col]
+    return independent_ttest(x, y; tail=tail)
 end
