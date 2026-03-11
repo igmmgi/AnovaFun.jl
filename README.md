@@ -4,7 +4,7 @@
 [![Build Status](https://github.com/igmmgi/AnovaFun.jl/workflows/Documentation/badge.svg)](https://github.com/igmmgi/AnovaFun.jl/actions)
 [![CI](https://github.com/igmmgi/AnovaFun.jl/workflows/Tests/badge.svg)](https://github.com/igmmgi/AnovaFun.jl/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18388656.svg)](https://doi.org/10.5281/zenodo.18388656)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18139228.svg)](https://doi.org/10.5281/zenodo.18139228)
 
 A Julia package for analysis of factorial experiments, including repeated measures (within-subjects), between-subjects, and mixed designs, inspired by the R packages afex, ez and emmeans.
 
@@ -321,7 +321,7 @@ If you use AnovaFun.jl in your research, please cite it:
   title     = {{AnovaFun.jl}},
   year      = {2026},
   url       = {https://github.com/igmmgi/AnovaFun.jl},
-  doi       = {10.5281/zenodo.18388656}
+  doi       = {10.5281/zenodo.18139228}
 }
 ```
 

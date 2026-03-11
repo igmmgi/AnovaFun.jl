@@ -3,7 +3,7 @@ message: "If you use this software, please cite it as below."
 type: software
 title: "AnovaFun.jl"
 version: "0.2.0"
-doi: "10.5281/zenodo.18388656"
+doi: "10.5281/zenodo.18139228"
 date-released: "2026-03-11"
 url: "https://github.com/igmmgi/AnovaFun.jl"
 repository-code: "https://github.com/igmmgi/AnovaFun.jl"
