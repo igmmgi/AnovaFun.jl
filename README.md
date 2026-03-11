@@ -148,8 +148,7 @@ plot_anova(result,
 plot_anova(result,
            x_grouping = :CurrentCongruency,
            y_grouping = :PreviousCongruency,
-           plot_type = :bar,
-           errorbars = :SE)
+           plot_type = :bar)
 
 # Raincloud plot showing data distributions
 plot_anova(result,
@@ -180,8 +179,7 @@ plot_anova(result,
 plot_anova(result,
            x_grouping = :CurrentCongruency,
            y_grouping = :PreviousCongruency,
-           plot_type = :bar,
-           errorbars = :SE)
+           plot_type = :bar)
 ```
 
 <img src="test/plot_anova_outputs/bar/026_Example_2x2_data.png" width="500">
@@ -230,7 +228,7 @@ plot_anova(result,
            x_grouping = :CurrentCongruency,
            y_grouping = :PreviousCongruency,
            plot_type = :raincloud_custom_2x2,
-           connected_points = true)
+           individual_data = :connected_points)
 ```
 
 <img src="test/plot_anova_outputs/raincloud_custom_2x2/005_Connected_points.png" width="500">
@@ -258,8 +256,8 @@ custom_theme = Theme(
 )
 
 fig = plot_anova(result,
-    x_grouping = :WF1,
-    y_grouping = :WF2,
+    x_grouping = :CurrentCongruency,
+    y_grouping = :PreviousCongruency,
     plot_type = :raincloud_custom_2x2,
     theme = custom_theme
 )

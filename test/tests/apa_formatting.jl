@@ -41,7 +41,7 @@
             DFd = [49.0, 49.0, 49.0],
             F = [4.39, 0.32, 0.49],
             p = [0.041, 0.574, 0.999], # Add p-values for fstat tests later
-            pes = [0.08, 0.01, 0.01],
+            η²ₚ = [0.08, 0.01, 0.01],
             ε = [1.0, 1.0, 0.97],
         )
         # Sphericity correction needs ε < 1.0 to show up
@@ -62,7 +62,7 @@
             DFd = [10],
             F = [1.0],
             p = [0.05],
-            pes = [0.1],
+            η²ₚ = [0.1],
         )
         result = AnovaResult(
             DataFrame(),
@@ -85,12 +85,12 @@
             DFd = [95.06, 49.0],
             F = [0.02, 4.39],
             p = [0.980, 0.041],
-            pes = [0.08, 0.01], # pes for effect size check
+            η²ₚ = [0.08, 0.01], # η²ₚ for effect size check
             ε = [0.97, 1.0],
         )
 
-        # Test generalized eta squared
-        table.ges = [0.05, 0.05]
+        # Test eta squared
+        table.η² = [0.05, 0.05]
 
         result = AnovaResult(
             DataFrame(),
@@ -108,8 +108,7 @@
             DFd = [10],
             F = [1.0],
             p = [0.05],
-            ges = [0.12],
-            ε = [1.0],
+            η² = [0.12],
         )
         res_ges = AnovaResult(
             DataFrame(),
@@ -122,15 +121,15 @@
 
         # Markdown (default)
         @test fstat(res_ges, "A") ==
-              "*F*(1, 10) = 1.00, *p* = .050, \$\\eta_G^2\$ = 0.12, \$\\epsilon\$ = 1.00"
+              "*F*(1, 10) = 1.00, *p* = .050, \$\\eta^2\$ = 0.12"
 
         # Latex
         @test fstat(res_ges, "A"; format = :latex) ==
-              "\\textit{F}(1, 10) = 1.00, \\textit{p} = .050, \$\\eta_G^2\$ = 0.12, \$\\epsilon\$ = 1.00"
+              "\\textit{F}(1, 10) = 1.00, \\textit{p} = .050, \$\\eta^2\$ = 0.12"
 
         # Text
         @test fstat(res_ges, "A"; format = :text) ==
-              "F(1, 10) = 1.00, p = .050, eta_G^2 = 0.12, epsilon = 1.00"
+              "F(1, 10) = 1.00, p = .050, eta^2 = 0.12"
     end
 
     @testset "means formatting" begin

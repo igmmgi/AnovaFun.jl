@@ -111,17 +111,14 @@ function fstat(result::AnovaResult, effect::String; format::Symbol = :markdown)
     es_label, es_val = "", NaN
 
     symbols = _get_symbols(format)
-    if hasproperty(row, :pes)
-        es_val = row.pes
+    if hasproperty(row, :η²ₚ)
+        es_val = row.η²ₚ
         es_label = symbols.eta_p2
-    elseif hasproperty(row, :ges)
-        es_val = row.ges
-        es_label = symbols.eta_g2
-    elseif hasproperty(row, :eta2)
-        es_val = row.eta2
+    elseif hasproperty(row, :η²)
+        es_val = row.η²
         es_label = symbols.eta2
-    elseif hasproperty(row, :omega2)
-        es_val = row.omega2
+    elseif hasproperty(row, :ω²)
+        es_val = row.ω²
         es_label = symbols.omega2
     elseif hasproperty(row, :SSn) && hasproperty(row, :SSd)
         es_val = row.SSn / (row.SSn + row.SSd)
