@@ -151,6 +151,7 @@ function _prepare_axis_kwargs_for_panel(
     axis_kw_panel[:xticklabelsvisible] = show_x_axis
     axis_kw_panel[:yticklabelsvisible] = show_y_axis
     axis_kw_panel[:bottomspinevisible] = true  # Always show bottom spine
+    filter!(kv -> kv.first ∈ _VALID_AXIS_ATTRS, axis_kw_panel)
     return axis_kw_panel
 end
 
@@ -276,6 +277,7 @@ function _create_facet_grid(
 
     # Create figure with theme applied
     fig = with_theme(plot_theme) do
+        filter!(kv -> kv.first ∈ _VALID_FIGURE_ATTRS, figure_kw)
         Figure(; figure_kw...)
     end
 

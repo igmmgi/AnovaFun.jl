@@ -26,8 +26,12 @@ A Julia package for analysis of factorial experiments, including repeated measur
 ## Installation
 
 ```julia
+# From the Julia General Registry
 using Pkg
 Pkg.add("AnovaFun")
+
+# Or directly from GitHub
+Pkg.add(url="https://github.com/igmmgi/AnovaFun.jl")
 ```
 
 ## Quick Reference
@@ -68,9 +72,11 @@ plot_anova(result, x_grouping = :factor1, y_grouping = :factor2, facet_cols = :f
 ```julia
 using AnovaFun, DataFrames, CSV
 
-# Load/create your dataset (long format)
-# Example: data = CSV.read("path/to/your/data.csv", DataFrame)
-data = CSV.read("path/to/data.csv", DataFrame)
+# Load the bundled example dataset
+data = CSV.read(AnovaFun.ExampleData, DataFrame)
+
+# Or load your own dataset (long format)
+# data = CSV.read("path/to/data.csv", DataFrame)
 
 # Preview the first few rows
 first(data, 10)

@@ -35,7 +35,10 @@ function create_and_save_plot(test_name, plot_func, args...; kwargs...)
     end
 
     plot_counters[plot_type][] += 1
-    fig = plot_func(args...; kwargs...)
+    result = plot_func(args...; kwargs...)
+
+    # Handle both NamedTuple (fig=, axes=) and plain Figure returns
+    fig = result isa Figure ? result : result.fig
 
     # Create subfolder for plot type
     plot_type_dir = joinpath(PLOT_OUTPUT_DIR, string(plot_type))
@@ -48,7 +51,7 @@ function create_and_save_plot(test_name, plot_func, args...; kwargs...)
     )
     filepath = joinpath(plot_type_dir, filename)
     save(filepath, fig)
-    return fig
+    return result
 end
 
 # Common test data setup
@@ -117,7 +120,7 @@ end
                 y_grouping = :WF2,
                 plot_type = :line,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Dodge width - small" begin
@@ -130,7 +133,7 @@ end
                 plot_type = :line,
                 dodge_width = 0.2,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Dodge width - large" begin
@@ -143,7 +146,7 @@ end
                 plot_type = :line,
                 dodge_width = 0.4,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Custom theme" begin
@@ -165,7 +168,7 @@ end
                 plot_type = :line,
                 theme = custom_theme,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Error bar customization" begin
@@ -179,7 +182,7 @@ end
                 errorbar_whiskerwidth = 30,
                 errorbar_linewidth = 3,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Facet by columns" begin
@@ -192,7 +195,7 @@ end
                 facet_cols = :WF2,
                 plot_type = :line,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Facet by rows" begin
@@ -205,7 +208,7 @@ end
                 facet_rows = :WF2,
                 plot_type = :line,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Individual points" begin
@@ -218,7 +221,7 @@ end
                 plot_type = :line,
                 individual_data = :points,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Individual points - custom alpha" begin
@@ -232,7 +235,7 @@ end
                 individual_data = :points,
                 individual_data_alpha = 0.1,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Connected individual points" begin
@@ -245,7 +248,7 @@ end
                 plot_type = :line,
                 individual_data = :connected_points,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Connected individual points - custom alphas" begin
@@ -260,7 +263,7 @@ end
                 individual_data_alpha = 0.1,
                 individual_data_line_alpha = 0.3,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Within-participant error bars" begin
@@ -273,7 +276,7 @@ end
                 plot_type = :line,
                 errorbars = :withinSE,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Main effect only" begin
@@ -284,7 +287,7 @@ end
                 x_grouping = :WF1,
                 plot_type = :line,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Multi-factor tests
@@ -301,7 +304,7 @@ end
                 facet_rows = :WF2,
                 plot_type = :line,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Three-way with column facets" begin
@@ -314,7 +317,7 @@ end
                 facet_cols = :WF3,
                 plot_type = :line,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Between-subjects tests
@@ -329,7 +332,7 @@ end
                 y_grouping = :BF2,
                 plot_type = :line,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Between-subjects error bars" begin
@@ -342,7 +345,7 @@ end
                 plot_type = :line,
                 errorbars = :SE,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Mixed design tests
@@ -357,7 +360,7 @@ end
                 y_grouping = :BF1,
                 plot_type = :line,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Mixed design with faceting" begin
@@ -370,7 +373,7 @@ end
                 facet_cols = :BF1,
                 plot_type = :line,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Direct AnovaResult input
@@ -383,7 +386,7 @@ end
                 y_grouping = :WF2,
                 plot_type = :line,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "No error bars" begin
@@ -396,7 +399,7 @@ end
                 plot_type = :line,
                 errorbars = :none,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Customization - axis, legend, title, and ylim" begin
@@ -417,7 +420,7 @@ end
                 legend_title = "My Factor",
                 legend_position = :lb,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Legend - hide" begin
@@ -430,7 +433,7 @@ end
                 plot_type = :line,
                 legend = false,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Custom ylim" begin
@@ -443,7 +446,7 @@ end
                 plot_type = :line,
                 axis_ylim = (-0.5, 0.5),
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Figure size" begin
@@ -456,7 +459,7 @@ end
                 plot_type = :line,
                 figure_size = (1200, 800),
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Example data tests
@@ -471,7 +474,7 @@ end
                 y_grouping = :CurrentCongruency,
                 plot_type = :line,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "ggplot2 theme" begin
@@ -484,7 +487,7 @@ end
                 plot_type = :line,
                 theme = theme_ggplot2(),
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
     end
 
@@ -503,7 +506,7 @@ end
                 y_grouping = :WF2,
                 plot_type = :bar,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Custom theme" begin
@@ -518,7 +521,7 @@ end
                 plot_type = :bar,
                 theme = custom_theme,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Error bar customization" begin
@@ -532,7 +535,7 @@ end
                 errorbar_whiskerwidth = 30,
                 errorbar_linewidth = 3,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Facet by columns" begin
@@ -545,7 +548,7 @@ end
                 facet_cols = :WF2,
                 plot_type = :bar,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Facet by rows" begin
@@ -558,7 +561,7 @@ end
                 facet_rows = :WF2,
                 plot_type = :bar,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Individual points" begin
@@ -571,7 +574,7 @@ end
                 plot_type = :bar,
                 individual_data = :points,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Individual points custom alpha" begin
@@ -585,7 +588,7 @@ end
                 individual_data = :points,
                 individual_data_alpha = 0.1,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Connected individual points" begin
@@ -598,7 +601,7 @@ end
                 plot_type = :bar,
                 individual_data = :connected_points,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Connected individual points custom alphas" begin
@@ -613,7 +616,7 @@ end
                 individual_data_alpha = 0.1,
                 individual_data_line_alpha = 0.3,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Within-participant error bars" begin
@@ -626,7 +629,7 @@ end
                 plot_type = :bar,
                 errorbars = :withinSE,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Main effect only" begin
@@ -637,7 +640,7 @@ end
                 x_grouping = :WF1,
                 plot_type = :bar,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Multi-factor tests
@@ -654,7 +657,7 @@ end
                 facet_rows = :WF2,
                 plot_type = :bar,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Three-way bar with facets" begin
@@ -667,7 +670,7 @@ end
                 facet_cols = :WF3,
                 plot_type = :bar,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Between-subjects tests
@@ -682,7 +685,7 @@ end
                 y_grouping = :BF2,
                 plot_type = :bar,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Between-subjects bar plot with facets" begin
@@ -695,7 +698,7 @@ end
                 facet_cols = :BF2,
                 plot_type = :bar,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Between-subjects error bars" begin
@@ -708,7 +711,7 @@ end
                 plot_type = :bar,
                 errorbars = :SE,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Mixed design tests
@@ -723,7 +726,7 @@ end
                 y_grouping = :BF1,
                 plot_type = :bar,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Mixed design with faceting" begin
@@ -736,7 +739,7 @@ end
                 facet_cols = :BF1,
                 plot_type = :bar,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Direct AnovaResult input
@@ -749,7 +752,7 @@ end
                 y_grouping = :WF2,
                 plot_type = :bar,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Plot from AnovaResult with emmeans_adjust" begin
@@ -762,7 +765,7 @@ end
                 plot_type = :bar,
                 emmeans_adjust = :bonferroni,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "No error bars" begin
@@ -775,7 +778,7 @@ end
                 plot_type = :bar,
                 errorbars = :none,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Customization axis, legend, title, and ylim" begin
@@ -796,7 +799,7 @@ end
                 legend_title = "My Factor",
                 legend_position = :lb,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Legend hide" begin
@@ -809,7 +812,7 @@ end
                 plot_type = :bar,
                 legend = false,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Custom ylim" begin
@@ -822,7 +825,7 @@ end
                 plot_type = :bar,
                 axis_ylim = (-0.5, 0.5),
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Figure size" begin
@@ -835,7 +838,7 @@ end
                 plot_type = :bar,
                 figure_size = (1200, 800),
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Example data tests
@@ -850,7 +853,7 @@ end
                 y_grouping = :CurrentCongruency,
                 plot_type = :bar,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Custom theme 1" begin
@@ -881,7 +884,7 @@ end
                 legend_framevisible = false,
                 legend_order = [:Incongruent, :Congruent],
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
     end
 
@@ -900,7 +903,7 @@ end
                 y_grouping = :WF2,
                 plot_type = :boxplot,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Boxplot with facets" begin
@@ -913,7 +916,7 @@ end
                 facet_cols = :WF2,
                 plot_type = :boxplot,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Custom theme" begin
@@ -928,7 +931,7 @@ end
                 plot_type = :boxplot,
                 theme = custom_theme,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Individual points" begin
@@ -941,7 +944,7 @@ end
                 plot_type = :boxplot,
                 individual_data = :points,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Individual points custom alpha" begin
@@ -955,7 +958,7 @@ end
                 individual_data = :points,
                 individual_data_alpha = 0.1,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Connected individual points" begin
@@ -968,7 +971,7 @@ end
                 plot_type = :boxplot,
                 individual_data = :connected_points,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Connected individual points custom alphas" begin
@@ -983,7 +986,7 @@ end
                 individual_data_alpha = 0.1,
                 individual_data_line_alpha = 0.3,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Main effect only" begin
@@ -994,7 +997,7 @@ end
                 x_grouping = :WF1,
                 plot_type = :boxplot,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Multi-factor tests
@@ -1011,7 +1014,7 @@ end
                 facet_rows = :WF2,
                 plot_type = :boxplot,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Three-way with column facets" begin
@@ -1024,7 +1027,7 @@ end
                 facet_cols = :WF3,
                 plot_type = :boxplot,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Between-subjects tests
@@ -1039,7 +1042,7 @@ end
                 y_grouping = :BF2,
                 plot_type = :boxplot,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Between-subjects boxplot with facets" begin
@@ -1052,7 +1055,7 @@ end
                 facet_cols = :BF2,
                 plot_type = :boxplot,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Mixed design tests
@@ -1067,7 +1070,7 @@ end
                 y_grouping = :BF1,
                 plot_type = :boxplot,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Mixed design with faceting" begin
@@ -1080,7 +1083,7 @@ end
                 facet_cols = :BF1,
                 plot_type = :boxplot,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Direct AnovaResult input
@@ -1093,7 +1096,7 @@ end
                 y_grouping = :WF2,
                 plot_type = :boxplot,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Plot from AnovaResult with emmeans_adjust" begin
@@ -1106,7 +1109,7 @@ end
                 plot_type = :boxplot,
                 emmeans_adjust = :bonferroni,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Customization axis, legend, title, and ylim" begin
@@ -1127,7 +1130,7 @@ end
                 legend_title = "My Factor",
                 legend_position = :lb,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Legend hide" begin
@@ -1140,7 +1143,7 @@ end
                 plot_type = :boxplot,
                 legend = false,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Custom ylim" begin
@@ -1153,7 +1156,7 @@ end
                 plot_type = :boxplot,
                 axis_ylim = (-0.5, 0.5),
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Figure size" begin
@@ -1166,7 +1169,7 @@ end
                 plot_type = :boxplot,
                 figure_size = (1200, 800),
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Example data tests
@@ -1181,7 +1184,7 @@ end
                 y_grouping = :CurrentCongruency,
                 plot_type = :boxplot,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
     end
 
@@ -1200,7 +1203,7 @@ end
                 y_grouping = :WF2,
                 plot_type = :violin,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Dodge width - small" begin
@@ -1213,7 +1216,7 @@ end
                 plot_type = :violin,
                 dodge_width = 0.2,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Dodge width - large" begin
@@ -1226,7 +1229,7 @@ end
                 plot_type = :violin,
                 dodge_width = 0.4,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Custom theme" begin
@@ -1241,7 +1244,7 @@ end
                 plot_type = :violin,
                 theme = custom_theme,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Facet by columns" begin
@@ -1254,7 +1257,7 @@ end
                 facet_cols = :WF2,
                 plot_type = :violin,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Facet by rows" begin
@@ -1267,7 +1270,7 @@ end
                 facet_rows = :WF2,
                 plot_type = :violin,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Individual points" begin
@@ -1280,7 +1283,7 @@ end
                 plot_type = :violin,
                 individual_data = :points,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Individual points custom alpha" begin
@@ -1294,7 +1297,7 @@ end
                 individual_data = :points,
                 individual_data_alpha = 0.1,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Connected individual points" begin
@@ -1307,7 +1310,7 @@ end
                 plot_type = :violin,
                 individual_data = :connected_points,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Connected individual points custom alphas" begin
@@ -1322,7 +1325,7 @@ end
                 individual_data_alpha = 0.1,
                 individual_data_line_alpha = 0.3,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Main effect only" begin
@@ -1333,7 +1336,7 @@ end
                 x_grouping = :WF1,
                 plot_type = :violin,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Multi-factor tests
@@ -1350,7 +1353,7 @@ end
                 facet_rows = :WF2,
                 plot_type = :violin,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Three-way violin with facets" begin
@@ -1363,7 +1366,7 @@ end
                 facet_cols = :WF3,
                 plot_type = :violin,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Between-subjects tests
@@ -1378,7 +1381,7 @@ end
                 y_grouping = :BF2,
                 plot_type = :violin,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Between-subjects violin plot with facets" begin
@@ -1391,7 +1394,7 @@ end
                 facet_cols = :BF2,
                 plot_type = :violin,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Mixed design tests
@@ -1406,7 +1409,7 @@ end
                 y_grouping = :BF1,
                 plot_type = :violin,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Mixed design with faceting" begin
@@ -1419,7 +1422,7 @@ end
                 facet_cols = :BF1,
                 plot_type = :violin,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Direct AnovaResult input
@@ -1432,7 +1435,7 @@ end
                 y_grouping = :WF2,
                 plot_type = :violin,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Plot from AnovaResult with emmeans_adjust" begin
@@ -1445,7 +1448,7 @@ end
                 plot_type = :violin,
                 emmeans_adjust = :bonferroni,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Customization axis legend title ylim" begin
@@ -1466,7 +1469,7 @@ end
                 legend_title = "My Factor",
                 legend_position = :lb,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Legend hide" begin
@@ -1479,7 +1482,7 @@ end
                 plot_type = :violin,
                 legend = false,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Custom ylim" begin
@@ -1492,7 +1495,7 @@ end
                 plot_type = :violin,
                 axis_ylim = (-0.5, 0.5),
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Figure size" begin
@@ -1505,7 +1508,7 @@ end
                 plot_type = :violin,
                 figure_size = (1200, 800),
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Example data tests
@@ -1520,7 +1523,7 @@ end
                 y_grouping = :CurrentCongruency,
                 plot_type = :violin,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
     end
 
@@ -1539,7 +1542,7 @@ end
                 y_grouping = :WF2,
                 plot_type = :raincloud,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Raincloud with facets" begin
@@ -1552,7 +1555,7 @@ end
                 facet_cols = :WF2,
                 plot_type = :raincloud,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Custom theme" begin
@@ -1567,7 +1570,7 @@ end
                 plot_type = :raincloud,
                 theme = custom_theme,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Individual points" begin
@@ -1580,7 +1583,7 @@ end
                 plot_type = :raincloud,
                 individual_data = :points,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Individual points custom alpha" begin
@@ -1594,7 +1597,7 @@ end
                 individual_data = :points,
                 individual_data_alpha = 0.1,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Main effect only" begin
@@ -1605,7 +1608,7 @@ end
                 x_grouping = :WF1,
                 plot_type = :raincloud,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Facet by columns" begin
@@ -1618,7 +1621,7 @@ end
                 facet_cols = :WF2,
                 plot_type = :raincloud,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Facet by rows" begin
@@ -1631,7 +1634,7 @@ end
                 facet_rows = :WF2,
                 plot_type = :raincloud,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Multi-factor tests
@@ -1648,7 +1651,7 @@ end
                 facet_rows = :WF2,
                 plot_type = :raincloud,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Three-way raincloud with facets" begin
@@ -1661,7 +1664,7 @@ end
                 facet_cols = :WF3,
                 plot_type = :raincloud,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Between-subjects tests
@@ -1676,7 +1679,7 @@ end
                 y_grouping = :BF2,
                 plot_type = :raincloud,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Between-subjects raincloud with facets" begin
@@ -1689,7 +1692,7 @@ end
                 facet_cols = :BF2,
                 plot_type = :raincloud,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Mixed design tests
@@ -1704,7 +1707,7 @@ end
                 y_grouping = :BF1,
                 plot_type = :raincloud,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Mixed design with faceting" begin
@@ -1717,7 +1720,7 @@ end
                 facet_cols = :BF1,
                 plot_type = :raincloud,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Direct AnovaResult input
@@ -1730,7 +1733,7 @@ end
                 y_grouping = :WF2,
                 plot_type = :raincloud,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Plot from AnovaResult with emmeans_adjust" begin
@@ -1743,7 +1746,7 @@ end
                 plot_type = :raincloud,
                 emmeans_adjust = :bonferroni,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Dodge width - small" begin
@@ -1756,7 +1759,7 @@ end
                 plot_type = :raincloud,
                 dodge_width = 0.2,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Dodge width - large" begin
@@ -1769,7 +1772,7 @@ end
                 plot_type = :raincloud,
                 dodge_width = 0.8,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Customization axis legend title ylim" begin
@@ -1790,7 +1793,7 @@ end
                 legend_title = "My Factor",
                 legend_position = :lb,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Legend hide" begin
@@ -1803,7 +1806,7 @@ end
                 plot_type = :raincloud,
                 legend = false,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Custom ylim" begin
@@ -1816,7 +1819,7 @@ end
                 plot_type = :raincloud,
                 axis_ylim = (-0.5, 0.5),
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Figure size" begin
@@ -1829,7 +1832,7 @@ end
                 plot_type = :raincloud,
                 figure_size = (1200, 800),
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Example data tests
@@ -1844,7 +1847,7 @@ end
                 y_grouping = :CurrentCongruency,
                 plot_type = :raincloud,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
     end
 
@@ -1863,7 +1866,7 @@ end
                 y_grouping = :WF2,
                 plot_type = :raincloud_custom,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Custom theme" begin
@@ -1878,7 +1881,7 @@ end
                 plot_type = :raincloud_custom,
                 theme = custom_theme,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Individual points" begin
@@ -1891,7 +1894,7 @@ end
                 plot_type = :raincloud_custom,
                 individual_data = :points,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Individual points custom alpha" begin
@@ -1905,7 +1908,7 @@ end
                 individual_data = :points,
                 individual_data_alpha = 0.1,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Main effect only" begin
@@ -1916,7 +1919,7 @@ end
                 x_grouping = :WF1,
                 plot_type = :raincloud_custom,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Connected points only make sense when pairing by x-levels (no y_grouping)
@@ -1929,7 +1932,7 @@ end
                 plot_type = :raincloud_custom,
                 individual_data = :connected_points,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Connected points x-level pairing custom alphas" begin
@@ -1943,7 +1946,7 @@ end
                 individual_data_alpha = 0.1,
                 individual_data_line_alpha = 0.3,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Facet by columns" begin
@@ -1956,7 +1959,7 @@ end
                 facet_cols = :WF2,
                 plot_type = :raincloud_custom,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Facet by rows" begin
@@ -1969,7 +1972,7 @@ end
                 facet_rows = :WF2,
                 plot_type = :raincloud_custom,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Raincloud_custom with facets" begin
@@ -1982,7 +1985,7 @@ end
                 facet_cols = :WF2,
                 plot_type = :raincloud_custom,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Multi-factor tests
@@ -1999,7 +2002,7 @@ end
                 facet_rows = :WF2,
                 plot_type = :raincloud_custom,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Three-way raincloud_custom with facets" begin
@@ -2012,7 +2015,7 @@ end
                 facet_cols = :WF3,
                 plot_type = :raincloud_custom,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Between-subjects tests
@@ -2027,7 +2030,7 @@ end
                 y_grouping = :BF2,
                 plot_type = :raincloud_custom,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Between-subjects raincloud_custom with facets" begin
@@ -2040,7 +2043,7 @@ end
                 facet_cols = :BF2,
                 plot_type = :raincloud_custom,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Mixed design tests
@@ -2055,7 +2058,7 @@ end
                 y_grouping = :BF1,
                 plot_type = :raincloud_custom,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Mixed design with faceting" begin
@@ -2068,7 +2071,7 @@ end
                 facet_cols = :BF1,
                 plot_type = :raincloud_custom,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Direct AnovaResult input
@@ -2081,7 +2084,7 @@ end
                 y_grouping = :WF2,
                 plot_type = :raincloud_custom,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Plot from AnovaResult with emmeans_adjust" begin
@@ -2094,7 +2097,7 @@ end
                 plot_type = :raincloud_custom,
                 emmeans_adjust = :bonferroni,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Customization axis legend title ylim" begin
@@ -2115,7 +2118,7 @@ end
                 legend_title = "My Factor",
                 legend_position = :lb,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Legend hide" begin
@@ -2128,7 +2131,7 @@ end
                 plot_type = :raincloud_custom,
                 legend = false,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Custom ylim" begin
@@ -2141,7 +2144,7 @@ end
                 plot_type = :raincloud_custom,
                 axis_ylim = (-0.5, 0.5),
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Figure size" begin
@@ -2154,7 +2157,7 @@ end
                 plot_type = :raincloud_custom,
                 figure_size = (1200, 800),
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Offset customization examples
@@ -2170,7 +2173,7 @@ end
                 raincloud_box_offset = 0.15,
                 raincloud_points_offset = 0.15,  # Same as box = overlay
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Offset wide spacing" begin
@@ -2186,7 +2189,7 @@ end
                 raincloud_box_offset = 0.3,
                 raincloud_points_offset = 0.1,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Offset compact spacing" begin
@@ -2202,7 +2205,7 @@ end
                 raincloud_box_offset = 0.1,
                 raincloud_points_offset = 0.0,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Component visibility tests
@@ -2217,7 +2220,7 @@ end
                 individual_data = :points,
                 raincloud_show_violin = false,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Hide boxplot" begin
@@ -2231,7 +2234,7 @@ end
                 individual_data = :points,
                 raincloud_show_boxplot = false,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Hide mean" begin
@@ -2246,7 +2249,7 @@ end
                 errorbars = :withinSE,
                 raincloud_show_mean = false,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Points only" begin
@@ -2263,7 +2266,7 @@ end
                 raincloud_show_mean = false,
                 legend_show = false,  # No labeled plots when both violin and boxplot hidden
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Violin and points only" begin
@@ -2278,7 +2281,7 @@ end
                 raincloud_show_boxplot = false,
                 raincloud_show_mean = false,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Example data tests for raincloud_custom
@@ -2293,7 +2296,7 @@ end
                 y_grouping = :CurrentCongruency,
                 plot_type = :raincloud_custom,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
     end
 
@@ -2312,7 +2315,7 @@ end
                 y_grouping = :WF2,
                 plot_type = :raincloud_custom_2x2,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Custom theme" begin
@@ -2327,7 +2330,7 @@ end
                 plot_type = :raincloud_custom_2x2,
                 theme = custom_theme,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Individual points" begin
@@ -2340,7 +2343,7 @@ end
                 plot_type = :raincloud_custom_2x2,
                 individual_data = :points,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Individual points custom alpha" begin
@@ -2354,7 +2357,7 @@ end
                 individual_data = :points,
                 individual_data_alpha = 0.1,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Connected points" begin
@@ -2367,7 +2370,7 @@ end
                 plot_type = :raincloud_custom_2x2,
                 individual_data = :connected_points,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Connected points custom alphas" begin
@@ -2382,7 +2385,7 @@ end
                 individual_data_alpha = 0.1,
                 individual_data_line_alpha = 0.3,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Error bars" begin
@@ -2395,7 +2398,7 @@ end
                 plot_type = :raincloud_custom_2x2,
                 errorbars = :withinSE,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Facet by columns" begin
@@ -2409,7 +2412,7 @@ end
                 facet_cols = :WF3,
                 plot_type = :raincloud_custom_2x2,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Facet by rows" begin
@@ -2423,7 +2426,7 @@ end
                 facet_rows = :WF3,
                 plot_type = :raincloud_custom_2x2,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Three-way with facets" begin
@@ -2437,7 +2440,7 @@ end
                 facet_cols = :WF3,
                 plot_type = :raincloud_custom_2x2,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Between-subjects tests
@@ -2452,7 +2455,7 @@ end
                 y_grouping = :BF2,
                 plot_type = :raincloud_custom_2x2,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Between-subjects with facets" begin
@@ -2465,7 +2468,7 @@ end
                 facet_cols = :BF2,
                 plot_type = :raincloud_custom_2x2,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Mixed design tests
@@ -2480,7 +2483,7 @@ end
                 y_grouping = :BF1,
                 plot_type = :raincloud_custom_2x2,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Mixed design with faceting" begin
@@ -2493,7 +2496,7 @@ end
                 facet_cols = :BF1,
                 plot_type = :raincloud_custom_2x2,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Plot from AnovaResult
@@ -2506,7 +2509,7 @@ end
                 y_grouping = :WF2,
                 plot_type = :raincloud_custom_2x2,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Plot from AnovaResult with emmeans_adjust" begin
@@ -2519,7 +2522,7 @@ end
                 plot_type = :raincloud_custom_2x2,
                 emmeans_adjust = :bonferroni,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Customization axis legend title ylim" begin
@@ -2536,7 +2539,7 @@ end
                 axis_ylim = (-3, 3),
                 legend_position = :rt,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Advanced customization with colors, labels, and legend" begin
@@ -2560,7 +2563,7 @@ end
                 axis_ylabel = "Reaction Time (ms)",
                 legend_title = "Previous Trial",
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Legend hide" begin
@@ -2573,7 +2576,7 @@ end
                 plot_type = :raincloud_custom_2x2,
                 legend_show = false,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Custom ylim" begin
@@ -2586,7 +2589,7 @@ end
                 plot_type = :raincloud_custom_2x2,
                 axis_ylim = (-5, 5),
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Figure size" begin
@@ -2599,7 +2602,7 @@ end
                 plot_type = :raincloud_custom_2x2,
                 figure_size = (1200, 800),
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Offset customization examples
@@ -2615,7 +2618,7 @@ end
                 raincloud_box_offset = 0.15,
                 raincloud_points_offset = 0.15,  # Same as box = overlay
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Offset wide spacing" begin
@@ -2631,7 +2634,7 @@ end
                 raincloud_box_offset = 0.3,
                 raincloud_points_offset = 0.1,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Offset compact spacing" begin
@@ -2647,7 +2650,7 @@ end
                 raincloud_box_offset = 0.1,
                 raincloud_points_offset = 0.0,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Component visibility tests
@@ -2662,7 +2665,7 @@ end
                 individual_data = :points,
                 raincloud_show_violin = false,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Hide boxplot" begin
@@ -2676,7 +2679,7 @@ end
                 individual_data = :points,
                 raincloud_show_boxplot = false,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Hide mean" begin
@@ -2691,7 +2694,7 @@ end
                 errorbars = :withinSE,
                 raincloud_show_mean = false,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Points only" begin
@@ -2708,7 +2711,7 @@ end
                 raincloud_show_mean = false,
                 legend_show = false,  # No labeled plots when both violin and boxplot hidden
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         @testset "Violin and points only" begin
@@ -2723,7 +2726,7 @@ end
                 raincloud_show_boxplot = false,
                 raincloud_show_mean = false,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
 
         # Example data tests
@@ -2738,7 +2741,7 @@ end
                 y_grouping = :CurrentCongruency,
                 plot_type = :raincloud_custom_2x2,
             )
-            @test fig isa Figure
+            @test fig.fig isa Figure
         end
     end
 end

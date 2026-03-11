@@ -226,7 +226,7 @@ function _group_emmeans_data(
     y_indices::Vector{Int},
     y_level_filter::Union{String,Nothing} = nothing,
 )
-    group_data = []
+    group_data = @NamedTuple{x_level::Any, row::DataFrameRow}[]
     for row in eachrow(emmeans_data)
         level_parts = strip.(split(row.Level, ", "))
         if length(level_parts) >= length(effect_factors)

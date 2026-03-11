@@ -54,7 +54,11 @@ plot_anova(em, x_grouping = :time, y_grouping = :group)
 ## Installation
 
 ```julia
+# From the Julia General Registry
 using Pkg
+Pkg.add("AnovaFun")
+
+# Or directly from GitHub
 Pkg.add(url="https://github.com/igmmgi/AnovaFun.jl")
 ```
 

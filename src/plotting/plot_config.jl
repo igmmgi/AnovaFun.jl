@@ -135,7 +135,9 @@ const PLOT_KWARGS = Dict{Symbol,Tuple{Any,String}}(
         "Padding for axis labels (left, right, bottom, top) in pixels",
     ),
 
-    # Axis customization 
+    # Axis customization
+    :title => (nothing, "Plot title (convenience alias for axis_title)"),
+    :axis_xticklabels => (nothing, "Custom x-axis tick labels as a vector of strings. Must match the number of x-axis categories. If nothing, uses factor level names."),
     :axis_xlabel => (nothing, "X-axis label (auto if nothing)"),
     :axis_ylabel => ("Mean", "Y-axis label"),
     :axis_xlim => (
@@ -186,6 +188,30 @@ const PLOT_KWARGS = Dict{Symbol,Tuple{Any,String}}(
         attr in propertynames(Makie.Legend)
     ]...,
 )
+
+# Valid Makie block attributes - used as allowlists when forwarding kwargs to constructors.
+# Only attributes in these sets are passed through; custom AnovaFun keys (e.g. axis_xticklabels,
+# axis_xlim) are automatically excluded without needing a manual blocklist.
+const _VALID_AXIS_ATTRS = Set(propertynames(Makie.Axis))
+const _VALID_FIGURE_ATTRS = Set(propertynames(Makie.Figure))
+const _VALID_LEGEND_ATTRS = Set(propertynames(Makie.Legend))
+
+"""
+    _extract_makie_kwargs(plot_kwargs::Dict{Symbol,Any}, prefix::String, valid_attrs::Set{Symbol})
+
+Extract kwargs with `prefix`, strip the prefix, and filter to only valid Makie attributes.
+Prevents invalid keys from leaking into Makie constructors.
+"""
+function _extract_makie_kwargs(plot_kwargs::Dict{Symbol,Any}, prefix::String, valid_attrs::Set{Symbol})
+    kw = _extract_kwargs(plot_kwargs, prefix)
+    filter!(kv -> kv.first ∈ valid_attrs, kw)
+    return kw
+end
+
+# Passthrough keys for individual data plot primitives.
+# Only these keys survive prefix-stripping before being splatted into scatter!/lines!.
+const _SCATTER_PASSTHROUGH_KEYS = Set([:markersize, :alpha, :color, :marker])
+const _LINES_PASSTHROUGH_KEYS = Set([:linewidth, :alpha, :color, :linestyle])
 
 """
 Create the default theme for AnovaFun plots.

@@ -677,8 +677,15 @@ function _plot_raincloud!(plot_spec::PlotPanelSpec, facet_ctx::FacetContext)
             # Remove keys that Makie's rainclouds! doesn't support
             delete!(kw_dict, :transparency)
             delete!(kw_dict, :width)
-            # Filter out internal config keys (inline filtering)
-            for key in INTERNAL_CONFIG_KEYS
+            # Remove AnovaFun internal config keys that leak through from distribution setup
+            for key in (
+                :violin_width_mult, :point_alpha, :jitter_mult, :boxplot_width_mult,
+                :violin_offset, :box_offset, :points_offset, :pair_gap,
+                :line_alpha, :show_violin, :show_boxplot, :show_mean,
+                Symbol("2x2_violin_offset"), Symbol("2x2_box_offset"),
+                Symbol("2x2_points_offset"), Symbol("2x2_box_dodge"),
+                Symbol("2x2_points_dodge"),
+            )
                 delete!(kw_dict, key)
             end
 

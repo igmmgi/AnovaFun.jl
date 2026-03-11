@@ -35,12 +35,13 @@ end
 
 """
     all_factors(design::DesignInfo)
+    all_factors(result::AnovaResult)
 
 Get all factors in canonical order (between factors first, then within factors).
-This is a helper method to avoid repeating the `vcat` pattern throughout the codebase.
 
 # Arguments
 - `design::DesignInfo`: Design information
+- `result::AnovaResult`: ANOVA result object (convenience overload, equivalent to `factors(result)`)
 
 # Returns
 A `Vector{Symbol}` containing all factors in order: between factors followed by within factors.
@@ -84,13 +85,13 @@ factors(result)  # Get all factors
 design_type(result)  # Get design type
 ```
 """
-struct AnovaResult
+struct AnovaResult{M}
     data::DataFrame
     dv::Symbol
     id::Symbol
     table::DataFrame
     design::DesignInfo
-    model::Any
+    model::M
 end
 
 # Accessor methods
@@ -112,6 +113,7 @@ factors(result)  # Returns [:group, :time]
 ```
 """
 factors(aov::AnovaResult) = all_factors(aov.design)
+all_factors(aov::AnovaResult) = all_factors(aov.design)
 
 """
     between_factors(result::AnovaResult)

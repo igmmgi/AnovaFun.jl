@@ -12,7 +12,19 @@ Returns a Dict with all plot configuration parameters.
 """
 function _prepare_plot_kwargs(kwargs)
     defaults = Dict(key => default_val for (key, (default_val, _)) in PLOT_KWARGS)
-    return merge(defaults, kwargs)
+    merged = merge(defaults, kwargs)
+
+    # Map `title` → `axis_title` (convenience alias)
+    if haskey(kwargs, :title) && !haskey(kwargs, :axis_title)
+        merged[:axis_title] = merged[:title]
+    end
+
+    # Map `legend` = false → also set legend_show = false for consistency
+    if haskey(kwargs, :legend) && kwargs[:legend] === false
+        merged[:legend_show] = false
+    end
+
+    return merged
 end
 
 """

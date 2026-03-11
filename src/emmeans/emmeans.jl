@@ -6,8 +6,9 @@ This method uses the data stored in the result object.
 
 # Arguments
 - `result::AnovaResult`: An `AnovaResult` object from `anova()`
-- `by::Union{Vector{Symbol}, Nothing}`: Effect(s) to compute marginal means for. 
+- `by::Union{Symbol, Vector{Symbol}, Nothing}`: Effect(s) to compute marginal means for. 
   - `nothing` (default): Compute marginal means for all effects (all factors and their interactions)
+  - `Symbol`: Compute marginal means for a single factor (e.g., `:time`)
   - `Vector{Symbol}`: Compute marginal means for an interaction (e.g., `[:time, :condition]`)
 - `group::Union{Symbol, Vector{Symbol}, Nothing}`: Factor(s) to group results by for display. 
   - `nothing` (default): Show all results in a single table
@@ -37,11 +38,14 @@ em = emmeans(result, by=:time, adjust=:bonferroni) # with correction
 """
 function emmeans(
     result::AnovaResult;
-    by::Union{Vector{Symbol},Nothing} = nothing,
+    by::Union{Symbol,Vector{Symbol},Nothing} = nothing,
     group::Union{Symbol,Vector{Symbol},Nothing} = nothing,
     level::Float64 = 0.95,
     adjust::Symbol = :none,
 )
+
+    # Normalize by parameter (convert single Symbol to Vector)
+    by = by isa Symbol ? [by] : by
 
     # validation
     adjustments = [:none, :bonferroni, :sidak]

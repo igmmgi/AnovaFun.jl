@@ -34,7 +34,7 @@ export plot_anova, plot_sample_size
 export AnovaResult, DesignInfo, EmmeansResult, PairwiseResult, PowerResult, SampleSizeResult
 
 # accessor/helper methods
-export factors, between_factors, within_factors, n_id, n_effects, design_type, model
+export factors, all_factors, between_factors, within_factors, n_id, n_effects, design_type, model
 
 # power analysis
 export simulate_data, power_analysis, sample_size, within_correlation_matrix

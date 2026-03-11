@@ -500,12 +500,9 @@ function _add_points!(
 
     # Plot all points
     if !isempty(points_x)
+        # Extract only valid Scatter kwargs via allowlist (no manual delete! needed)
         point_kw = _extract_kwargs(plot_spec.plot_kwargs, "individual_data_")
-        # Remove label to prevent legend entry
-        delete!(point_kw, :label)
-        # Remove line-specific keys (these are for connecting lines, not points)
-        delete!(point_kw, :linewidth)
-        delete!(point_kw, :line_alpha)
+        filter!(kv -> kv.first ∈ _SCATTER_PASSTHROUGH_KEYS, point_kw)
 
         # Determine point color based on individual_data_color_mode
         _determine_individual_data_color!(point_kw, plot_spec.plot_kwargs, plot_idx)
@@ -528,17 +525,12 @@ function _add_connected_points!(
     # Don't set color - let Makie handle it via theme cycle
 
     if !isempty(subject_points)
+        # Remap line_alpha → alpha before allowlist filtering
         connect_kw = _extract_kwargs(plot_kwargs, "individual_data_")
-        # Remove label to prevent legend entry
-        delete!(connect_kw, :label)
-        # Remove point-specific keys (these are for points, not connecting lines)
-        delete!(connect_kw, :markersize)
-        delete!(connect_kw, :alpha)  # Remove point alpha, we'll use line_alpha instead
+        haskey(connect_kw, :line_alpha) && (connect_kw[:alpha] = pop!(connect_kw, :line_alpha))
 
-        # Map line_alpha (from individual_data_line_alpha) to alpha for Makie
-        if haskey(connect_kw, :line_alpha)
-            connect_kw[:alpha] = pop!(connect_kw, :line_alpha)
-        end
+        # Extract only valid Lines kwargs via allowlist (no manual delete! needed)
+        filter!(kv -> kv.first ∈ _LINES_PASSTHROUGH_KEYS, connect_kw)
 
         # Determine line color based on individual_data_color_mode (same as points)
         _determine_individual_data_color!(connect_kw, plot_kwargs, plot_idx)
@@ -583,7 +575,8 @@ function _add_legend(ax, y_unique, y_factors, plot_kwargs)
         legend_title = join(string.(y_factors), " × ")
     end
 
-    # Extract legend kwargs and add legend
+    # Extract legend kwargs, filter to valid Makie Legend attributes, and add legend
     legend_kw = _extract_legend_kwargs(plot_kwargs, exclude_positioning = true)
+    filter!(kv -> kv.first ∈ _VALID_LEGEND_ATTRS, legend_kw)
     axislegend(ax, legend_title; legend_kw...)
 end

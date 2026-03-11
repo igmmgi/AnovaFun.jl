@@ -6,17 +6,16 @@ This file contains generic helper functions used throughout the plotting code.
 
 # Generic function to extract all kwargs with a given prefix
 # Strips the prefix from the keys (e.g., "violin_color" -> :color)
-# Automatically filters out internal config keys that shouldn't be passed to Makie
+# Note: For Makie block types (Axis, Figure, Legend), invalid keys are filtered
+# at the constructor boundary via allowlist filtering — see plot_config.jl.
 function _extract_kwargs(plot_kwargs::Dict{Symbol,Any}, prefix::String)
     kw = Dict{Symbol,Any}()
     prefix_len = length(prefix)
     for (key, value) in plot_kwargs
         key_str = string(key)
         if startswith(key_str, prefix) && length(key_str) > prefix_len
-            # Strip prefix and convert back to symbol
             stripped_key = Symbol(key_str[(prefix_len+1):end])
-            # Skip internal config keys (these shouldn't be passed to Makie)
-            if !(stripped_key in INTERNAL_CONFIG_KEYS) && !isnothing(value)
+            if !isnothing(value)
                 kw[stripped_key] = value
             end
         end
@@ -355,62 +354,7 @@ function _determine_individual_data_color!(
     # If :fixed mode and no explicit color, let Makie handle it (will use next cycle color)
 end
 
-# Internal configuration keys that should be filtered out before passing to Makie
-# These are AnovaFun-specific configuration parameters, not Makie plot attributes
-# Include both prefixed versions (e.g., :raincloud_*) and stripped versions (e.g., :2x2_*)
-# because some code paths strip the prefix before filtering
-const INTERNAL_CONFIG_KEYS = [
-    :raincloud_violin_width_mult,
-    :raincloud_point_alpha,
-    :raincloud_jitter_mult,
-    :raincloud_boxplot_width_mult,
-    :raincloud_violin_offset,
-    :raincloud_box_offset,
-    :raincloud_points_offset,
-    :raincloud_2x2_violin_offset,
-    :raincloud_2x2_box_offset,
-    :raincloud_2x2_points_offset,
-    :raincloud_2x2_box_dodge,
-    :raincloud_2x2_points_dodge,
-    # Stripped versions (without raincloud_ prefix)
-    Symbol("2x2_violin_offset"),
-    Symbol("2x2_box_offset"),
-    Symbol("2x2_points_offset"),
-    Symbol("2x2_box_dodge"),
-    Symbol("2x2_points_dodge"),
-    :raincloud_line_alpha,
-    :raincloud_show_violin,
-    :raincloud_show_boxplot,
-    :raincloud_show_mean,
-    # Stripped versions (after prefix extraction in _configure_distribution_plot_kwargs!)
-    :violin_width_mult,
-    :point_alpha,
-    :jitter_mult,
-    :boxplot_width_mult,
-    :violin_offset,
-    :box_offset,
-    :points_offset,
-    :pair_gap,
-    :line_alpha,
-    :show_violin,
-    :show_boxplot,
-    :show_mean,
-    :jitter_dodged_mult,
-    :jitter_single_width,
-    :ylim_kde_std_multiplier,
-    :ylim_whisker_iqr_multiplier,
-    :ylim_padding,
-    :layout_panel_width,
-    :layout_panel_height,
-    :layout_row_gap,
-    :layout_row_gap_with_facets,
-    :layout_col_gap,
-    :layout_axis_label_padding,
-    :dodge_width,
-    :individual_data_color_mode,
-    # Stripped version (after prefix extraction with "individual_data_")
-    :color_mode,
-]
+
 
 """
     _can_plot_individual_data(individual_data::Symbol, raw_data, id_col, dv)

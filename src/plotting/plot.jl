@@ -29,7 +29,7 @@ Common examples include:
 See `PLOT_KWARGS` for the complete list of customizable parameters.
 
 # Returns
-A Makie figure object
+A NamedTuple `(fig=Figure, axes=Vector{Axis})` containing the figure and all axes
 
 # Examples
 ```julia
@@ -161,7 +161,7 @@ function plot_anova(
     _add_legends_to_grid!(grid, y_unique, plot_data.y_factors, plot_kwargs)
     _apply_layout_adjustments!(grid, facet_spec)
 
-    return grid.fig
+    return (fig = grid.fig, axes = vec(grid.axes))
 end
 
 """
@@ -214,6 +214,9 @@ Includes a horizontal line at the target power and a vertical line at the recomm
 - `figure_size::Tuple{Int,Int}`: Figure size in pixels (default: (800, 600))
 - `theme::Union{Theme, Nothing}`: Makie theme for customization
 
+# Returns
+A NamedTuple `(fig=Figure, axes=Vector{Axis})` containing the figure and all axes
+
 # Examples
 ```julia
 result = sample_size(80, ...)
@@ -249,6 +252,7 @@ function _create_sample_size_plot(
     # Create figure with multiple rows (one per effect)
     n_effects = length(effect_cols)
     fig = Figure(size = figure_size)
+    axes = Axis[]
 
     # Create subplot for each effect
     for (i, effect) in enumerate(effect_cols)
@@ -259,6 +263,7 @@ function _create_sample_size_plot(
             ylabel = "Power (%)",
             title = effect,
         )
+        push!(axes, ax)
 
         # Plot power curve for this effect
         n_values = result.results.n
@@ -304,5 +309,20 @@ function _create_sample_size_plot(
     # Add overall title
     Label(fig[0, 1], "Power Analysis", fontsize = 16, font = :bold)
 
-    return fig
+    return (fig = fig, axes = axes)
 end
+
+"""
+    Makie.save(filename, result::NamedTuple; kwargs...)
+
+Convenience method to save a plot result directly.
+Extracts the `fig` field from `plot_anova` or `plot_sample_size` NamedTuple results.
+
+# Examples
+```julia
+result = plot_anova(em, x_grouping=:factor1)
+save("my_plot.png", result)
+```
+"""
+Makie.save(filename::AbstractString, result::@NamedTuple{fig::Figure, axes::Vector{Axis}}; kwargs...) =
+    Makie.save(filename, result.fig; kwargs...)

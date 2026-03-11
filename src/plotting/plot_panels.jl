@@ -68,12 +68,26 @@ function _create_panel_spec(
 end
 
 """
-    _set_panel_xticks(ax, x_unique)
+    _set_panel_xticks(ax, x_unique, plot_kwargs)
 
-Set x-axis ticks for a panel.
+Set x-axis ticks for a panel. Uses custom labels from `axis_xticklabels` if provided.
 """
-function _set_panel_xticks(ax, x_unique::Vector)
-    ax.xticks = (1:length(x_unique), [string(v) for v in x_unique])
+function _set_panel_xticks(ax, x_unique::Vector, plot_kwargs::Dict{Symbol,Any})
+    custom_labels = get(plot_kwargs, :axis_xticklabels, nothing)
+    labels = if !isnothing(custom_labels)
+        n_labels = length(custom_labels)
+        n_levels = length(x_unique)
+        if n_labels != n_levels
+            throw(ArgumentError(
+                "axis_xticklabels has $n_labels labels but there are $n_levels x categories. " *
+                "Expected labels for: $(x_unique)"
+            ))
+        end
+        [string(v) for v in custom_labels]
+    else
+        [string(v) for v in x_unique]
+    end
+    ax.xticks = (1:length(x_unique), labels)
 end
 
 """
@@ -122,7 +136,7 @@ function _plot_all_panels!(
             )
 
             # Set x-axis ticks
-            _set_panel_xticks(ax, plot_data.x_unique)
+            _set_panel_xticks(ax, plot_data.x_unique, plot_kwargs_with_theme)
         end
     end
 end
