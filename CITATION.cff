@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "AnovaFun.jl"
+version: "0.2.0"
+doi: "10.5281/zenodo.18388656"
+date-released: "2026-03-11"
+url: "https://github.com/igmmgi/AnovaFun.jl"
+repository-code: "https://github.com/igmmgi/AnovaFun.jl"
+license: MIT
+abstract: >-
+  A Julia package for analysis of factorial experiments, including repeated
+  measures (within-subjects), between-subjects, and mixed designs. Features
+  include estimated marginal means, pairwise comparisons, sphericity
+  corrections, effect sizes, power analysis, and publication-quality plots.
+authors:
+  - family-names: "Mackenzie"
+    given-names: "Ian G. M."
+    email: "ian.mackenzie@uni-tuebingen.de"
+  - family-names: "Sonntag"
+    given-names: "Samuel"
+    email: "samuel.sonntag@uni-tuebingen.de"
+  - family-names: "Dudschig"
+    given-names: "Carolin"
+    email: "carolin.dudschig@uni-tuebingen.de"
+keywords:
+  - ANOVA
+  - statistics
+  - Julia
+  - repeated-measures
+  - factorial-design
+  - effect-size
+  - estimated-marginal-means

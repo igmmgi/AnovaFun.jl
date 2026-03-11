@@ -313,6 +313,18 @@ fig = plot_anova(result,
 
 ## Citation
 
+If you use AnovaFun.jl in your research, please cite it:
+
+```bibtex
+@software{mackenzie2026anovafun,
+  author    = {Mackenzie, Ian G. M. and Sonntag, Samuel and Dudschig, Carolin},
+  title     = {{AnovaFun.jl}},
+  year      = {2026},
+  url       = {https://github.com/igmmgi/AnovaFun.jl},
+  doi       = {10.5281/zenodo.18388656}
+}
+```
+
 ## License
 
 MIT License
