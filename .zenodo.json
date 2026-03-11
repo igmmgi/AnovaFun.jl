@@ -1,0 +1,31 @@
+{
+  "title": "AnovaFun.jl",
+  "description": "A Julia package for analysis of factorial experiments, including repeated measures (within-subjects), between-subjects, and mixed designs.",
+  "license": {
+    "id": "MIT"
+  },
+  "upload_type": "software",
+  "creators": [
+    {
+      "name": "Mackenzie, Ian G. M.",
+      "affiliation": "University of Tübingen"
+    },
+    {
+      "name": "Sonntag, Samuel",
+      "affiliation": "University of Tübingen"
+    },
+    {
+      "name": "Dudschig, Carolin",
+      "affiliation": "University of Tübingen"
+    }
+  ],
+  "keywords": [
+    "ANOVA",
+    "statistics",
+    "Julia",
+    "repeated-measures",
+    "factorial-design",
+    "effect-size",
+    "estimated-marginal-means"
+  ]
+}
