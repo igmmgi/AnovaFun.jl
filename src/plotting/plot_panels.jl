@@ -137,6 +137,22 @@ function _plot_all_panels!(
 
             # Set x-axis ticks
             _set_panel_xticks(ax, plot_data.x_unique, config)
+
+            # Set y-axis ticks if specified
+            _set_panel_yticks!(ax, config)
         end
+    end
+end
+
+"""
+    _set_panel_yticks!(ax, config)
+
+Set y-axis ticks for a panel if `axis_yticks` is provided.
+Accepts any value valid for Makie's `yticks` attribute (e.g., a range, vector, or tuple of (positions, labels)).
+"""
+function _set_panel_yticks!(ax, config::PlotConfig)
+    custom_yticks = config.axis.yticks
+    if !isnothing(custom_yticks)
+        ax.yticks = custom_yticks
     end
 end

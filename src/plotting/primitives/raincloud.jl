@@ -995,8 +995,8 @@ function _plot_raincloud_custom!(
         positions = _calculate_raincloud_positions(x_pos, setup.config)
 
         # Only add labels on the first x-level to avoid duplicate legend entries
-        left_label = x_idx == 1 ? string(y_level_left) : nothing
-        right_label = x_idx == 1 ? string(y_level_right) : nothing
+        left_label = x_idx == 1 ? _resolve_legend_label(setup.config, y_level_left, setup.y_unique) : nothing
+        right_label = x_idx == 1 ? _resolve_legend_label(setup.config, y_level_right, setup.y_unique) : nothing
 
         # Plot the pair (with labels only on first iteration when pairing by y-levels)
         point_coords = _plot_raincloud_pair!(
@@ -1161,7 +1161,7 @@ function _plot_raincloud_custom_2x2!(
         setup.config,
         individual_data,
         :left;
-        label = string(y_level_1),
+        label = _resolve_legend_label(setup.config, y_level_1, setup.y_unique),
     )
     pre_g2_result = _plot_2x2_group_components!(
         setup.ax,
@@ -1175,7 +1175,7 @@ function _plot_raincloud_custom_2x2!(
         setup.config,
         individual_data,
         :left;
-        label = string(y_level_2),
+        label = _resolve_legend_label(setup.config, y_level_2, setup.y_unique),
     )
     post_g1_result = _plot_2x2_group_components!(
         setup.ax,

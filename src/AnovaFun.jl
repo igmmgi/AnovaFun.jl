@@ -16,6 +16,7 @@ using GLM
 using LinearAlgebra
 using Logging
 using Makie
+using CairoMakie
 using PrettyTables
 using Printf
 using Random

@@ -50,7 +50,7 @@ function _plot_single_group!(
         )
     end
     # Create main plot element with label (this will be the legend entry)
-    label = !isnothing(y_level) ? string(y_level) : nothing
+    label = _resolve_legend_label(setup.config, y_level, setup.y_unique)
 
     if plot_type == :line
         line_kw = _prepare_element_kwargs(setup.config, "line_", plot_idx, label)

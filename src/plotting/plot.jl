@@ -22,14 +22,15 @@ Common examples include:
 - `boxplot_color`, `boxplot_strokecolor`, `boxplot_strokewidth`: Boxplot customization
 - `violin_color`, `violin_alpha`: Violin plot customization
 - `individual_data_color`, `individual_data_markersize`, `individual_data_alpha`: Individual data point customization
-- `axis_xlabel`, `axis_ylabel`, `axis_xlim`, `axis_ylim`: Axis customization (functional settings)
+- `axis_xlabel`, `axis_ylabel`, `axis_xlim`, `axis_ylim`, `axis_xticklabels`, `axis_yticks`, `axis_xorder`: Axis customization
+- `legend_position`, `legend_title`, `legend_labels`, `legend_framevisible`: Legend customization
 - `figure_size`: Figure size customization
 - `theme`: Theme customization (font sizes, grid colors/visibility, etc.). See `_default_plot_theme()` for defaults.
 
 See `?PlotConfig` for the complete list of customizable parameters.
 
 # Returns
-A NamedTuple `(fig=Figure, axes=Vector{Axis})` containing the figure and all axes
+A `Makie.Figure` object that auto-displays in the REPL. Access axes via `content(fig[row, col])`.
 
 # Examples
 ```julia
@@ -138,6 +139,9 @@ function plot_anova(
     plot_theme = _prepare_plot_theme!(config)
     plot_data = _prepare_plot_data(result, x_grouping, y_grouping, facet_cols, facet_rows)
 
+    # Reorder x-axis levels if axis_xorder is specified
+    _apply_xorder!(plot_data.x_unique, config)
+
     # Create facet specification
     facet_spec = _create_facet_spec(
         facet_cols,
@@ -192,7 +196,7 @@ function plot_anova(
     _add_legends_to_grid!(grid, y_unique, plot_data.y_factors, config)
     _apply_layout_adjustments!(grid, facet_spec)
 
-    return (fig = grid.fig, axes = vec(grid.axes))
+    return grid.fig
 end
 
 """
@@ -210,7 +214,7 @@ Includes a horizontal line at the target power and a vertical line at the recomm
 - `theme::Union{Theme, Nothing}`: Makie theme for customization
 
 # Returns
-A NamedTuple `(fig=Figure, axes=Vector{Axis})` containing the figure and all axes
+A `Makie.Figure` object that auto-displays in the REPL.
 
 # Examples
 ```julia
@@ -304,20 +308,5 @@ function _create_sample_size_plot(
     # Add overall title
     Label(fig[0, 1], "Power Analysis", fontsize = 16, font = :bold)
 
-    return (fig = fig, axes = axes)
+    return fig
 end
-
-"""
-    Makie.save(filename, result::NamedTuple; kwargs...)
-
-Convenience method to save a plot result directly.
-Extracts the `fig` field from `plot_anova` or `plot_sample_size` NamedTuple results.
-
-# Examples
-```julia
-result = plot_anova(em, x_grouping=:factor1)
-save("my_plot.png", result)
-```
-"""
-Makie.save(filename::AbstractString, result::@NamedTuple{fig::Figure, axes::Vector{Axis}}; kwargs...) =
-    Makie.save(filename, result.fig; kwargs...)

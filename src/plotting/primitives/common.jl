@@ -508,6 +508,8 @@ function _add_legend(ax, y_unique, y_factors, config::PlotConfig)
 
     # Build legend kwargs from config
     legend_kw = to_makie_dict(config.legend, exclude_positioning = true)
+    # position is an axislegend keyword, not a Legend attribute, so pass it separately
+    legend_position = pop!(legend_kw, :position, :rt)
     filter!(kv -> kv.first ∈ _VALID_LEGEND_ATTRS, legend_kw)
-    axislegend(ax, legend_title; legend_kw...)
+    axislegend(ax, legend_title; position = legend_position, legend_kw...)
 end

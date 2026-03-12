@@ -173,4 +173,87 @@ using Test
         @test d[:framevisible] == true
         @test d[:position] == :rt
     end
+
+    # ─── New AxisKwargs fields ────────────────────────────────────────────
+    @testset "AxisKwargs new fields - defaults" begin
+        config = AnovaFun.PlotConfig()
+        @test isnothing(config.axis.xorder)
+        @test isnothing(config.axis.yticks)
+        @test isnothing(config.axis.xticklabels)
+    end
+
+    @testset "AxisKwargs new fields - routing" begin
+        config = AnovaFun.PlotConfig(;
+            axis_xorder = ["B", "A"],
+            axis_yticks = 0:10:100,
+        )
+        @test config.axis.xorder == ["B", "A"]
+        @test config.axis.yticks == 0:10:100
+    end
+
+    @testset "to_makie_dict excludes custom axis fields" begin
+        ak = AnovaFun.AxisKwargs(;
+            ylabel = "Y",
+            xticklabels = ["a", "b"],
+            xorder = ["b", "a"],
+            yticks = 0:10:100,
+        )
+        d = AnovaFun.to_makie_dict(ak)
+        @test d[:ylabel] == "Y"
+        @test !haskey(d, :xticklabels)
+        @test !haskey(d, :xorder)
+        @test !haskey(d, :yticks)
+    end
+
+    # ─── New LegendKwargs field ───────────────────────────────────────────
+    @testset "LegendKwargs labels - default" begin
+        config = AnovaFun.PlotConfig()
+        @test isnothing(config.legend.labels)
+    end
+
+    @testset "LegendKwargs labels - routing" begin
+        config = AnovaFun.PlotConfig(; legend_labels = ["A", "B"])
+        @test config.legend.labels == ["A", "B"]
+    end
+
+    # ─── _resolve_legend_label helper ─────────────────────────────────────
+    @testset "_resolve_legend_label" begin
+        y_unique = ["level1", "level2"]
+
+        # Without custom labels — returns string(y_level)
+        config_no_labels = AnovaFun.PlotConfig()
+        @test AnovaFun._resolve_legend_label(config_no_labels, "level1", y_unique) == "level1"
+        @test isnothing(AnovaFun._resolve_legend_label(config_no_labels, nothing, y_unique))
+
+        # With custom labels — maps by position
+        config_labels = AnovaFun.PlotConfig(; legend_labels = ["Custom A", "Custom B"])
+        @test AnovaFun._resolve_legend_label(config_labels, "level1", y_unique) == "Custom A"
+        @test AnovaFun._resolve_legend_label(config_labels, "level2", y_unique) == "Custom B"
+    end
+
+    # ─── _apply_xorder! helper ────────────────────────────────────────────
+    @testset "_apply_xorder!" begin
+        # No xorder — no change
+        x = ["A", "B", "C"]
+        config_no = AnovaFun.PlotConfig()
+        AnovaFun._apply_xorder!(x, config_no)
+        @test x == ["A", "B", "C"]
+
+        # With xorder — reorders in place
+        x2 = ["A", "B", "C"]
+        config_order = AnovaFun.PlotConfig(; axis_xorder = ["C", "A", "B"])
+        AnovaFun._apply_xorder!(x2, config_order)
+        @test x2 == ["C", "A", "B"]
+
+        # Invalid level — throws
+        x3 = ["A", "B"]
+        config_bad = AnovaFun.PlotConfig(; axis_xorder = ["A", "X"])
+        @test_throws ArgumentError AnovaFun._apply_xorder!(x3, config_bad)
+
+        # Wrong count — throws
+        x4 = ["A", "B"]
+        config_short = AnovaFun.PlotConfig(; axis_xorder = ["A"])
+        @test_throws ArgumentError AnovaFun._apply_xorder!(x4, config_short)
+    end
 end
+

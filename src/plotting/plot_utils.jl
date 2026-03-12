@@ -229,6 +229,24 @@ function _iterate_y_levels(y_unique, y_faceting::Bool, f::Function)
 end
 
 """
+    _resolve_legend_label(config, y_level, y_unique)
+
+Resolve the legend label for a given y_level. Uses custom `legend_labels` if provided,
+otherwise falls back to `string(y_level)`.
+"""
+function _resolve_legend_label(config::PlotConfig, y_level, y_unique)
+    isnothing(y_level) && return nothing
+    custom_labels = config.legend.labels
+    if !isnothing(custom_labels) && !isnothing(y_unique)
+        idx = findfirst(==(y_level), y_unique)
+        if !isnothing(idx) && idx <= length(custom_labels)
+            return string(custom_labels[idx])
+        end
+    end
+    return string(y_level)
+end
+
+"""
     _get_error_distance(row, errorbars::Symbol)
 
 Extract error bar distance from a row, handling different property names.

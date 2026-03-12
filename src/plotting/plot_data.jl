@@ -8,6 +8,42 @@ This file contains functions for:
 """
 
 
+"""
+    _apply_xorder!(x_unique, config)
+
+Reorder `x_unique` in-place based on `config.axis.xorder`.
+`xorder` should be a vector of level values in the desired display order.
+"""
+function _apply_xorder!(x_unique::Vector, config::PlotConfig)
+    xorder = config.axis.xorder
+    isnothing(xorder) && return
+
+    order_strs = string.(xorder)
+    existing_strs = string.(x_unique)
+
+    # Validate all specified levels exist
+    for level in order_strs
+        if level ∉ existing_strs
+            throw(ArgumentError(
+                "axis_xorder contains unknown level \"$level\". " *
+                "Available levels: $(existing_strs)"
+            ))
+        end
+    end
+
+    if length(order_strs) != length(existing_strs)
+        throw(ArgumentError(
+            "axis_xorder has $(length(order_strs)) levels but there are " *
+            "$(length(existing_strs)) x categories. " *
+            "Expected all of: $(existing_strs)"
+        ))
+    end
+
+    # Reorder in-place
+    new_order = [x_unique[findfirst(==(s), existing_strs)] for s in order_strs]
+    copy!(x_unique, new_order)
+end
+
 # filter raw data to rows matching all specified factor levels
 function _filter_raw_data(
     raw_data,

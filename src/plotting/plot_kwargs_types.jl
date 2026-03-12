@@ -122,6 +122,8 @@ and are forwarded directly to `Makie.Axis()`.
 """
 Base.@kwdef struct AxisKwargs
     xticklabels::Any = nothing
+    xorder::Any = nothing
+    yticks::Any = nothing
     xlabel::Any = nothing
     ylabel::Any = "Mean"
     xlim::Any = nothing
@@ -148,6 +150,7 @@ Base.@kwdef struct LegendKwargs
     show::Bool = true
     when_faceting::Bool = true
     title::Any = nothing
+    labels::Any = nothing
     position::Any = :rt
     order::Any = nothing
     makie_attrs::Dict{Symbol,Any} = Dict{Symbol,Any}()
@@ -382,7 +385,7 @@ end
     to_makie_dict(a::AxisKwargs)
 
 Convert AxisKwargs to a Dict containing only valid Makie.Axis attributes.
-Custom fields (xticklabels, xlim, ylim) are excluded — they're handled separately.
+Custom fields (xticklabels, xorder, yticks, xlim, ylim) are excluded — they're handled separately.
 """
 function to_makie_dict(a::AxisKwargs)
     d = copy(a.makie_attrs)
