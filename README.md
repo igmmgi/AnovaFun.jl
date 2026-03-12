@@ -26,7 +26,7 @@ A Julia package for analysis of factorial experiments, including repeated measur
 ## Installation
 
 ```julia
-# From the Julia General Registry
+# From the  Julia General Registry
 using Pkg
 Pkg.add("AnovaFun")
 
