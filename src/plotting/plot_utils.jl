@@ -23,19 +23,8 @@ function _extract_kwargs(plot_kwargs::Dict{Symbol,Any}, prefix::String)
     return kw
 end
 
-function _extract_legend_kwargs(
-    plot_kwargs::Dict{Symbol,Any};
-    exclude_positioning::Bool = false,
-)
-    legend_kwargs = _extract_kwargs(plot_kwargs, "legend_")
-    # Remove positioning attributes if requested (these are not direct legend kwargs)
-    if exclude_positioning
-        for attr in [:halign, :valign, :alignmode]
-            pop!(legend_kwargs, attr, nothing)
-        end
-    end
-    return legend_kwargs
-end
+
+
 
 # Helper to match factor levels in a row
 _match_factor_level(row, factors, level) =
@@ -109,19 +98,22 @@ function _calculate_spacing(setup, plot_type::Union{Symbol,Nothing} = nothing)
 end
 
 """
-    _prepare_plot_kwargs(plot_kwargs, prefix, plot_idx, label, color)
+    _prepare_element_kwargs(config, prefix, plot_idx, label, color)
 
-Extract kwargs with prefix, set color and label if provided.
+Extract kwargs for a plot element by prefix, set color and label if provided.
 Returns prepared kwargs dictionary ready for plotting.
+
+Note: This is a transitional helper. For typed struct access, use to_fields_dict
+or direct struct field access instead.
 """
-function _prepare_plot_kwargs(
-    plot_kwargs::Dict{Symbol,Any},
+function _prepare_element_kwargs(
+    config::PlotConfig,
     prefix::String,
     plot_idx::Int,
     label::Union{String,Nothing} = nothing,
     color = nothing,
 )
-    kw = _extract_kwargs(plot_kwargs, prefix)
+    kw = _extract_kwargs(to_dict(config), prefix)
 
     # Set label if provided
     if !isnothing(label)
@@ -130,7 +122,7 @@ function _prepare_plot_kwargs(
 
     # Set color if provided (use group color if color is nothing)
     if isnothing(color)
-        color = _get_group_color(plot_kwargs, plot_idx)
+        color = _get_group_color(config, plot_idx)
     end
     if !isnothing(color)
         kw[:color] = color
@@ -198,14 +190,14 @@ Returns the 1-based index where the level appears in x_levels.
 _get_x_position(level, x_levels::Vector) = findfirst(x -> x == level, x_levels)
 
 """
-    _get_group_color(plot_kwargs::Dict{Symbol,Any}, plot_idx::Int)
+    _get_group_color(config::PlotConfig, plot_idx::Int)
 
 Extract group color from theme palette at the specified plot index.
 Uses modulo arithmetic to cycle through available colors.
 Returns nothing if no theme or palette is available.
 """
-function _get_group_color(plot_kwargs::Dict{Symbol,Any}, plot_idx::Int)
-    theme = get(plot_kwargs, :_internal_theme, nothing)
+function _get_group_color(config::PlotConfig, plot_idx::Int)
+    theme = config._resolved_theme
     isnothing(theme) && return nothing
 
     palette = hasproperty(theme, :palette) ? theme.palette : nothing
@@ -285,17 +277,6 @@ function _get_muted_color(color)
     )
 end
 
-"""
-    _get_muted_group_color(plot_kwargs::Dict{Symbol,Any}, plot_idx::Int)
-
-Get a muted version of the group color from theme palette.
-Returns nothing if no theme or palette is available.
-"""
-function _get_muted_group_color(plot_kwargs::Dict{Symbol,Any}, plot_idx::Int)
-    group_color = _get_group_color(plot_kwargs, plot_idx)
-    isnothing(group_color) && return nothing
-    return _get_muted_color(group_color)
-end
 
 """
     _handle_distribution_alpha!(kw::Dict{Symbol,Any}, group_color, alpha_key::Symbol=:alpha)
@@ -328,27 +309,27 @@ function _handle_distribution_alpha!(
 end
 
 """
-    _determine_individual_data_color!(kw::Dict{Symbol,Any}, plot_kwargs::Dict{Symbol,Any}, plot_idx::Int)
+    _determine_individual_data_color!(kw::Dict{Symbol,Any}, config::PlotConfig, plot_idx::Int)
 
 Determine and set color for individual data points/lines based on individual_data_color_mode.
 Modifies `kw` in place by setting the :color key.
 """
 function _determine_individual_data_color!(
     kw::Dict{Symbol,Any},
-    plot_kwargs::Dict{Symbol,Any},
+    config::PlotConfig,
     plot_idx::Int,
 )
-    point_color_mode = plot_kwargs[:individual_data_color_mode]
-    explicit_point_color = plot_kwargs[:individual_data_color]
+    point_color_mode = config.individual_data.color_mode
+    explicit_point_color = config.individual_data.color
 
     # If explicit color is provided, use it (overrides mode)
     if !isnothing(explicit_point_color)
         kw[:color] = explicit_point_color
     elseif point_color_mode == :match
-        group_color = _get_group_color(plot_kwargs, plot_idx)
+        group_color = _get_group_color(config, plot_idx)
         !isnothing(group_color) && (kw[:color] = group_color)
     elseif point_color_mode == :muted
-        muted_color = _get_muted_group_color(plot_kwargs, plot_idx)
+        muted_color = _get_muted_group_color(config, plot_idx)
         !isnothing(muted_color) && (kw[:color] = muted_color)
     end
     # If :fixed mode and no explicit color, let Makie handle it (will use next cycle color)

@@ -156,7 +156,7 @@ function _prepare_axis_kwargs_for_panel(
 end
 
 """
-    _create_facet_axes!(fig, axes, spec, axis_kw, xlabel_val, ylabel_val, xlim_val, ylim_val, x_unique, max_offset, plot_theme, plot_kwargs)
+    _create_facet_axes!(fig, axes, spec, axis_kw, xlabel_val, ylabel_val, xlim_val, ylim_val, x_unique, max_offset, plot_theme, config)
 
 Create all axes for the facet grid.
 Mutates the axes matrix in place.
@@ -173,7 +173,7 @@ function _create_facet_axes!(
     x_unique::Vector{String},
     max_offset::Float64,
     plot_theme,
-    plot_kwargs::Dict{Symbol,Any},
+    config::PlotConfig,
 )
     n_rows, n_cols = size(axes)
     has_row_facets = !isnothing(spec.row_factors) && !isempty(spec.row_factors)
@@ -227,7 +227,7 @@ function _create_facet_axes!(
                         rotation = 3 * pi / 2,  # 270 degrees (vertical)
                         halign = :left,
                         valign = :center,
-                        padding = plot_kwargs[:layout_axis_label_padding],
+                        padding = config.layout.axis_label_padding,
                         font = ax.titlefont,
                         fontsize = ax.titlesize,
                     )
@@ -243,35 +243,26 @@ This handles the figure creation, axis setup, and layout for faceted plots.
 """
 function _create_facet_grid(
     spec::FacetSpec,
-    plot_kwargs::Dict{Symbol,Any},
+    config::PlotConfig,
     x_factors::Vector{Symbol},
     x_unique::Vector{String},
     y_unique,
     y_faceting::Bool,
     plot_theme,
 )
-    # Extract figure kwargs
-    figure_kw = _extract_kwargs(plot_kwargs, "figure_")
+    # Build figure kwargs from config
+    figure_kw = to_makie_dict(config.figure)
 
     # Add extra column for row facet labels if needed (they go on the right)
     has_row_facets = !isnothing(spec.row_factors) && !isempty(spec.row_factors)
-    # extra_col_width = has_row_facets ? 100 : 0
     n_cols = length(spec.col_levels)
     n_rows = length(spec.row_levels)
 
     # Set default size if not specified
-    # Check for figure_size in plot_kwargs first (convenience key that doesn't have the "figure_" prefix)
-    if haskey(plot_kwargs, :figure_size) && !isnothing(plot_kwargs[:figure_size])
-        figure_kw[:size] = plot_kwargs[:figure_size]
-    elseif haskey(figure_kw, :size) && !isnothing(figure_kw[:size])
-        # Use the size from figure_kw (extracted from figure_size or other figure_* keys)
-        # Already set, do nothing
-    else
-        # Default: 800x600 per panel, scaled by number of columns/rows
-        # figure_kw[:size] = (800 * n_cols + extra_col_width, 600 * n_rows)
+    if !haskey(figure_kw, :size) || isnothing(figure_kw[:size])
         figure_kw[:size] = (
-            plot_kwargs[:layout_panel_width] * n_cols,
-            plot_kwargs[:layout_panel_height] * n_rows,
+            config.layout.panel_width * n_cols,
+            config.layout.panel_height * n_rows,
         )
     end
 
@@ -282,26 +273,25 @@ function _create_facet_grid(
     end
 
     # Add spacing between rows and columns
-    # Grid spacing - larger gap between facet rows for visual separation
     row_gap =
-        has_row_facets ? plot_kwargs[:layout_row_gap_with_facets] :
-        plot_kwargs[:layout_row_gap]
-    col_gap = plot_kwargs[:layout_col_gap]
+        has_row_facets ? config.layout.row_gap_with_facets :
+        config.layout.row_gap
+    col_gap = config.layout.col_gap
     rowgap!(fig.layout, row_gap)
     colgap!(fig.layout, col_gap)
 
-    # Pre-compute values that are the same for all panels
-    axis_kw = _extract_kwargs(plot_kwargs, "axis_")
+    # Pre-compute axis kwargs from config
+    axis_kw = to_makie_dict(config.axis)
     xlabel_default =
         length(x_factors) == 1 ? string(x_factors[1]) : join(string.(x_factors), " × ")
     xlabel_val =
         isnothing(get(axis_kw, :xlabel, nothing)) ? xlabel_default : axis_kw[:xlabel]
     ylabel_val = get(axis_kw, :ylabel, "Mean")
-    xlim_val = get(axis_kw, :xlim, nothing)
-    ylim_val = get(axis_kw, :ylim, nothing)
+    xlim_val = config.axis.xlim
+    ylim_val = config.axis.ylim
     delete!(axis_kw, :xlim)
     delete!(axis_kw, :ylim)
-    dodge_width = plot_kwargs[:dodge_width]
+    dodge_width = config.dodge_width
     n_dodge = !isnothing(y_unique) && !y_faceting ? length(y_unique) : 1
     max_offset = n_dodge > 1 ? (dodge_width / n_dodge) / 2 : 0.0
 
@@ -321,7 +311,7 @@ function _create_facet_grid(
         x_unique,
         max_offset,
         plot_theme,
-        plot_kwargs,
+        config,
     )
 
     # Link axes (x and y limits should be linked)
@@ -330,24 +320,21 @@ function _create_facet_grid(
     return FacetGrid(fig, axes, spec)
 end
 
-# Constants for y-limit calculation
-# Constants for distribution plot y-limit calculations moved to plot_config.jl
-
 # Helper to add KDE extent estimates to y_values
-function _add_kde_extent!(y_values, raw_vals::AbstractVector, plot_kwargs)
+function _add_kde_extent!(y_values, raw_vals::AbstractVector, config::PlotConfig)
     length(raw_vals) <= 1 && return
     μ = mean(raw_vals)
     σ = std(raw_vals)
-    kde_extent = plot_kwargs[:ylim_kde_std_multiplier] * σ
+    kde_extent = config.ylim.kde_std_multiplier * σ
     push!(y_values, μ - kde_extent, μ + kde_extent)
 end
 
 # Helper to add boxplot whisker extents to y_values
-function _add_whisker_extents!(y_values, raw_vals::AbstractVector, plot_kwargs)
+function _add_whisker_extents!(y_values, raw_vals::AbstractVector, config::PlotConfig)
     length(raw_vals) <= 1 && return
     q1, q3 = quantile(raw_vals, [0.25, 0.75])
     iqr = q3 - q1
-    whisker_mult = plot_kwargs[:ylim_whisker_iqr_multiplier]
+    whisker_mult = config.ylim.whisker_iqr_multiplier
     whisker_low = q1 - whisker_mult * iqr
     whisker_high = q3 + whisker_mult * iqr
     raw_min, raw_max = extrema(raw_vals)
@@ -362,7 +349,7 @@ function _calculate_global_ylimits(
     plot_type::Symbol,
     errorbars::Symbol,
     individual_data::Symbol,
-    plot_kwargs,
+    config::PlotConfig,
 )
 
     # Collect y values from all facets
@@ -408,16 +395,14 @@ function _calculate_global_ylimits(
                 append!(y_values, raw_vals)
 
                 # Add KDE extent/whisker estimates for violin/boxplot-like plots
-                # For violin plots (including in raincloud), only add KDE extent if datalimits is not extrema
                 if plot_type in [:violin, :raincloud_custom, :raincloud_custom_2x2]
-                    violin_datalimits = plot_kwargs[:violin_datalimits]
-                    if violin_datalimits != extrema
-                        _add_kde_extent!(y_values, raw_vals, plot_kwargs)
+                    if config.violin.datalimits != extrema
+                        _add_kde_extent!(y_values, raw_vals, config)
                     end
                 end
 
                 if plot_type in [:boxplot, :raincloud]
-                    _add_whisker_extents!(y_values, raw_vals, plot_kwargs)
+                    _add_whisker_extents!(y_values, raw_vals, config)
                 end
             end
         end
@@ -426,7 +411,7 @@ function _calculate_global_ylimits(
     # Calculate limits with padding
     y_min, y_max = extrema(y_values)
     y_range = y_max - y_min
-    padding = plot_kwargs[:ylim_padding]
+    padding = config.ylim.padding
 
     return (y_min - padding * y_range, y_max + padding * y_range)
 end

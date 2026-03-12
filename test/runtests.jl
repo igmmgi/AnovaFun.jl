@@ -49,6 +49,7 @@ println("="^40)
     include("tests/sample_size.jl")
 
     # Plotting Tests
+    include("tests/plot_config.jl")
     include("tests/plotting.jl")
 end
 

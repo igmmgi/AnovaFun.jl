@@ -7,86 +7,64 @@ This file contains functions to prepare and merge plot parameters, themes, and s
 """
     _prepare_plot_kwargs(kwargs)
 
-Merge user kwargs with defaults from PLOT_KWARGS.
-Returns a Dict with all plot configuration parameters.
+Construct a `PlotConfig` from user kwargs, validating all arguments.
+Returns a `PlotConfig` with typed, validated parameters.
+
+Throws `ArgumentError` for unrecognized kwargs (catches typos like `violin_colr`).
 """
 function _prepare_plot_kwargs(kwargs)
-    defaults = Dict(key => default_val for (key, (default_val, _)) in PLOT_KWARGS)
-    merged = merge(defaults, kwargs)
-
-    # Map `title` → `axis_title` (convenience alias)
-    if haskey(kwargs, :title) && !haskey(kwargs, :axis_title)
-        merged[:axis_title] = merged[:title]
-    end
-
-    # Map `legend` = false → also set legend_show = false for consistency
-    if haskey(kwargs, :legend) && kwargs[:legend] === false
-        merged[:legend_show] = false
-    end
-
-    return merged
+    return PlotConfig(; kwargs...)
 end
 
 """
-    _prepare_plot_theme(plot_kwargs)
+    _prepare_plot_theme!(config::PlotConfig)
 
 Prepare the plot theme by merging user theme with defaults.
-Returns the Theme object to use for plotting.
+Sets `config._resolved_theme` and returns the Theme object.
 """
-function _prepare_plot_theme(plot_kwargs::Dict{Symbol,Any})
-    if !isnothing(plot_kwargs[:theme])
-        return merge(plot_kwargs[:theme], _default_plot_theme())
+function _prepare_plot_theme!(config::PlotConfig)
+    if !isnothing(config.theme)
+        config._resolved_theme = merge(config.theme, _default_plot_theme())
     else
-        return _default_plot_theme()
+        config._resolved_theme = _default_plot_theme()
     end
+    return config._resolved_theme
 end
 
 """
-    _prepare_y_unique(plot_data, y_faceting, plot_kwargs)
+    _prepare_y_unique(plot_data, y_faceting, config)
 
 Determine the y_unique levels to use for plotting, considering faceting and legend settings.
 Returns the y_unique vector (or nothing) to use for the plot.
 """
-function _prepare_y_unique(plot_data, y_faceting::Bool, plot_kwargs::Dict{Symbol,Any})
+function _prepare_y_unique(plot_data, y_faceting::Bool, config::PlotConfig)
     if isnothing(plot_data.y_unique)
         return nothing
-    elseif y_faceting && !plot_kwargs[:legend_when_faceting]
+    elseif y_faceting && !config.legend.when_faceting
         # Facets distinguish y-levels, no legend needed
         return nothing
     else
-        return _reorder(plot_data.y_unique, plot_kwargs[:legend_order])
+        return _reorder(plot_data.y_unique, config.legend.order)
     end
 end
 
 """
-    _should_hide_y_in_legend(y_faceting, plot_kwargs)
+    _should_hide_y_in_legend(y_faceting, config)
 
 Determine if y-grouping should be hidden from legend (when used for faceting).
 """
-_should_hide_y_in_legend(y_faceting::Bool, plot_kwargs::Dict{Symbol,Any}) =
-    y_faceting && !plot_kwargs[:legend_when_faceting]
+_should_hide_y_in_legend(y_faceting::Bool, config::PlotConfig) =
+    y_faceting && !config.legend.when_faceting
 
 """
-    _add_theme_to_kwargs(plot_kwargs, plot_theme)
-
-Add theme to plot_kwargs dictionary as an internal parameter.
-Returns a new dictionary with the theme added.
-"""
-function _add_theme_to_kwargs(plot_kwargs::Dict{Symbol,Any}, plot_theme)
-    plot_kwargs_with_theme = copy(plot_kwargs)
-    plot_kwargs_with_theme[:_internal_theme] = plot_theme
-    return plot_kwargs_with_theme
-end
-
-"""
-    _prepare_panel_spec_parameters(plot_data, y_faceting, plot_kwargs, y_unique)
+    _prepare_panel_spec_parameters(plot_data, y_faceting, config, y_unique)
 
 Prepare parameters that are the same for all panels.
 
 # Arguments
 - `plot_data`: Prepared plot data from `_prepare_plot_data`
 - `y_faceting`: Whether y-grouping factors are used for faceting
-- `plot_kwargs`: Plot configuration dictionary
+- `config`: PlotConfig configuration
 - `y_unique`: Prepared y_unique levels (or nothing)
 
 # Returns
@@ -95,10 +73,10 @@ NamedTuple with y_factors_for_spec, y_levels_for_spec, col_factors_for_spec, row
 function _prepare_panel_spec_parameters(
     plot_data,
     y_faceting::Bool,
-    plot_kwargs::Dict{Symbol,Any},
+    config::PlotConfig,
     y_unique,
 )
-    hide_y = _should_hide_y_in_legend(y_faceting, plot_kwargs)
+    hide_y = _should_hide_y_in_legend(y_faceting, config)
 
     y_factors_for_spec = hide_y ? Symbol[] : plot_data.y_factors
     y_levels_for_spec = hide_y ? nothing : y_unique

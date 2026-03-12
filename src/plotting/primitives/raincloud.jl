@@ -8,12 +8,12 @@ This file contains:
 """
 
 """
-    _calculate_jitter(violin_width, plot_kwargs)
+    _calculate_jitter(violin_width, config)
 
 Calculate jitter width for raincloud points, ensuring minimum jitter of 0.05.
 """
-function _calculate_jitter(violin_width, plot_kwargs)
-    jitter = violin_width * plot_kwargs[:raincloud_jitter_mult]
+function _calculate_jitter(violin_width, config)
+    jitter = violin_width * config.raincloud.jitter_mult
     return max(jitter, 0.05)  # Ensure minimum jitter to prevent overplotting
 end
 
@@ -135,7 +135,7 @@ function _plot_raincloud_boxplot!(
 end
 
 """
-    _plot_raincloud_points!(ax, x_pos, y_data, color, alpha, jitter_width, plot_kwargs, markersize)
+    _plot_raincloud_points!(ax, x_pos, y_data, color, alpha, jitter_width, config, markersize)
 
 Plot individual data points for raincloud plots with jitter.
 Returns (points_x, points_y, scatter_plot) tuple.
@@ -147,8 +147,8 @@ function _plot_raincloud_points!(
     color,
     alpha,
     jitter_width,
-    plot_kwargs,
-    markersize = plot_kwargs[:raincloud_markersize],
+    config,
+    markersize = config.raincloud.markersize,
 )
     isempty(y_data) && return (Float64[], Float64[], nothing)
     points_x = Float64[]
@@ -166,7 +166,7 @@ function _plot_raincloud_points!(
 end
 
 """
-    _plot_raincloud_side!(ax, y_data, positions, color, alpha, violin_width, violin_kw, boxplot_kw, individual_data, side, plot_kwargs)
+    _plot_raincloud_side!(ax, y_data, positions, color, alpha, violin_width, violin_kw, boxplot_kw, individual_data, side, config)
 
 Plot one side (left or right) of a raincloud plot with all components.
 Returns named tuple with point coordinates and plot elements for visibility syncing.
@@ -184,7 +184,7 @@ function _plot_raincloud_side!(
     boxplot_kw,
     individual_data,
     side,
-    plot_kwargs;
+    config;
     label = nothing,
 )
     spec = RaincloudComponentSpec(
@@ -200,12 +200,12 @@ function _plot_raincloud_side!(
     )
 
     points_x, points_y, elements =
-        _render_raincloud_components!(spec, plot_kwargs, violin_kw, boxplot_kw)
+        _render_raincloud_components!(spec, config, violin_kw, boxplot_kw)
     return (points_x = points_x, points_y = points_y, elements = elements)
 end
 
 """
-    _plot_raincloud_errorbars!(ax, left_x, right_x, left_group_data, right_group_data, left_color, right_color, plot_kwargs, errorbars)
+    _plot_raincloud_errorbars!(ax, left_x, right_x, left_group_data, right_group_data, left_color, right_color, config, errorbars)
 
 Plot error bars for left and right sides independently.
 """
@@ -217,7 +217,7 @@ function _plot_raincloud_errorbars!(
     right_group_data,
     left_color,
     right_color,
-    plot_kwargs,
+    config,
     errorbars,
 )
     if errorbars == :none
@@ -233,7 +233,7 @@ function _plot_raincloud_errorbars!(
             left_x,
             left_mean,
             left_distance,
-            plot_kwargs,
+            config,
             errorbars;
             color = left_color,
         )
@@ -248,7 +248,7 @@ function _plot_raincloud_errorbars!(
             right_x,
             right_mean,
             right_distance,
-            plot_kwargs,
+            config,
             errorbars;
             color = right_color,
         )
@@ -258,7 +258,7 @@ function _plot_raincloud_errorbars!(
 end
 
 """
-    _plot_connecting_lines!(ax, map_1, map_2, plot_kwargs; color=:gray, linewidth=1)
+    _plot_connecting_lines!(ax, map_1, map_2, config; color=:gray, linewidth=1)
 
 Plot connecting lines between matching subjects in two point maps.
 Each map should be Dict{Any, Tuple{Float64, Float64}} mapping subject IDs to (x, y) coordinates.
@@ -268,11 +268,11 @@ function _plot_connecting_lines!(
     ax,
     map_1,
     map_2,
-    plot_kwargs;
+    config;
     color = :gray,
     linewidth = 1,
 )
-    line_alpha = plot_kwargs[:raincloud_line_alpha]
+    line_alpha = config.raincloud.line_alpha
     line_plots = Any[]
 
     for subject_id in keys(map_1)
@@ -295,7 +295,7 @@ function _plot_connecting_lines!(
 end
 
 """
-    _calculate_raincloud_positions(center, plot_kwargs)
+    _calculate_raincloud_positions(center, config)
 
 Calculate x positions for all raincloud components (violin, box, points) for left and right sides
 centered around `center`. Components are positioned to straddle the tick mark symmetrically,
@@ -310,10 +310,10 @@ Layout:
 - Left: Violin (outer left), Box (left of tick), Points (right of tick - crossing center)
 - Right: Points (left of tick - crossing center), Box (right of tick), Violin (outer right)
 """
-function _calculate_raincloud_positions(center, plot_kwargs)
-    violin_offset = plot_kwargs[:raincloud_violin_offset]
-    box_offset = plot_kwargs[:raincloud_box_offset]
-    points_offset = plot_kwargs[:raincloud_points_offset]
+function _calculate_raincloud_positions(center, config)
+    violin_offset = config.raincloud.violin_offset
+    box_offset = config.raincloud.box_offset
+    points_offset = config.raincloud.points_offset
 
     # Position components to straddle the center symmetrically
     # Violin is outermost, box and points both on same side closer to center
@@ -366,7 +366,7 @@ end
 """
     _plot_raincloud_pair!(
         ax, left_y, right_y, positions, left_color, right_color, alpha, violin_width,
-        violin_kw_left, violin_kw_right, boxplot_kw_left, boxplot_kw_right, individual_data, plot_kwargs;
+        violin_kw_left, violin_kw_right, boxplot_kw_left, boxplot_kw_right, individual_data, config;
         left_label = nothing, right_label = nothing
     )
 
@@ -389,7 +389,7 @@ function _plot_raincloud_pair!(
     boxplot_kw_left,
     boxplot_kw_right,
     individual_data,
-    plot_kwargs;
+    config;
     left_label = nothing,
     right_label = nothing,
 )
@@ -405,7 +405,7 @@ function _plot_raincloud_pair!(
         boxplot_kw_left,
         individual_data,
         :left,
-        plot_kwargs;
+        config;
         label = left_label,
     )
 
@@ -421,7 +421,7 @@ function _plot_raincloud_pair!(
         boxplot_kw_right,
         individual_data,
         :right,
-        plot_kwargs;
+        config;
         label = right_label,
     )
 
@@ -436,7 +436,7 @@ function _plot_raincloud_pair!(
 end
 
 """
-    _plot_mean_with_errorbars!(ax, x_positions, means, distances, color, plot_kwargs, errorbars; label=nothing)
+    _plot_mean_with_errorbars!(ax, x_positions, means, distances, color, config, errorbars; label=nothing)
 
 Plot a mean line connecting positions with error bars.
 Returns the main line plot for legend/visibility syncing.
@@ -447,12 +447,12 @@ function _plot_mean_with_errorbars!(
     means::Vector{Float64},
     distances::Vector{Float64},
     color,
-    plot_kwargs,
+    config,
     errorbars::Symbol;
     label = nothing,
 )
     # Plot mean line
-    line_kw = _extract_kwargs(plot_kwargs, "line_")
+    line_kw = _extract_kwargs(to_dict(config), "line_")
     if !isnothing(color)
         line_kw[:color] = color
     end
@@ -467,7 +467,7 @@ function _plot_mean_with_errorbars!(
         x_positions,
         means,
         distances,
-        plot_kwargs,
+        config,
         errorbars;
         color = color,
     )
@@ -490,7 +490,7 @@ end
 
 """
     _plot_2x2_group_components!(ax, y_data, positions, color, alpha, violin_width, 
-                                violin_kw, boxplot_kw, plot_kwargs, individual_data, side)
+                                violin_kw, boxplot_kw, config, individual_data, side)
 
 Plot violin, boxplot, and scatter points for a single group in a 2x2 raincloud layout.
 `positions` should be a named tuple with `violin_x`, `box_x`, and `points_x`.
@@ -507,7 +507,7 @@ function _plot_2x2_group_components!(
     violin_width,
     violin_kw,
     boxplot_kw,
-    plot_kwargs,
+    config,
     individual_data,
     side::Symbol;
     label = nothing,
@@ -524,11 +524,11 @@ function _plot_2x2_group_components!(
         label,
     )
 
-    return _render_raincloud_components!(spec, plot_kwargs, violin_kw, boxplot_kw)
+    return _render_raincloud_components!(spec, config, violin_kw, boxplot_kw)
 end
 
 """
-    _calculate_2x2_positions(pre_center, post_center, plot_kwargs)
+    _calculate_2x2_positions(pre_center, post_center, config)
 
 Calculate all x positions for a 2x2 raincloud layout. Components straddle their centers
 symmetrically, with the visual center at the tick mark.
@@ -542,13 +542,13 @@ Uses 2x2-specific offset parameters:
 
 Returns a named tuple with positions for each group at each time point.
 """
-function _calculate_2x2_positions(pre_center, post_center, plot_kwargs)
+function _calculate_2x2_positions(pre_center, post_center, config)
     # Use 2x2-specific parameters
-    violin_offset = plot_kwargs[:raincloud_2x2_violin_offset]
-    box_offset = plot_kwargs[:raincloud_2x2_box_offset]
-    points_offset = plot_kwargs[:raincloud_2x2_points_offset]
-    box_dodge = plot_kwargs[:raincloud_2x2_box_dodge]
-    points_dodge = plot_kwargs[:raincloud_2x2_points_dodge]
+    violin_offset = config.raincloud.x2x2_violin_offset
+    box_offset = config.raincloud.x2x2_box_offset
+    points_offset = config.raincloud.x2x2_points_offset
+    box_dodge = config.raincloud.x2x2_box_dodge
+    points_dodge = config.raincloud.x2x2_points_dodge
 
     # Pre side: violins on left (facing right), components straddle center
     # Group 1 is upper/first y-level, Group 2 is lower/second y-level
@@ -633,7 +633,7 @@ function _finalize_2x2_group!(
     (isempty(group_pre_data) || isempty(group_post_data)) && return nothing
 
     # Check if mean line should be shown
-    show_mean = get(setup.plot_kwargs, :raincloud_show_mean, true)
+    show_mean = setup.config.raincloud.show_mean
 
     if show_mean
         pre_mean = group_pre_data[1].row.Mean
@@ -648,7 +648,7 @@ function _finalize_2x2_group!(
             [pre_mean, post_mean],
             [pre_distance, post_distance],
             color,
-            setup.plot_kwargs,
+            setup.config,
             errorbars,
         )
 
@@ -736,7 +736,7 @@ function _plot_raincloud_custom_simple!(
             1
         end
     color_idx = isnothing(color_idx) ? 1 : color_idx
-    group_color = _get_group_color(plot_spec.plot_kwargs, color_idx)
+    group_color = _get_group_color(plot_spec.config, color_idx)
 
     # Determine label for legend (only on first x-position)
     y_label =
@@ -749,17 +749,17 @@ function _plot_raincloud_custom_simple!(
         end
 
     # Extract kwargs
-    violin_kw = _extract_kwargs(setup.plot_kwargs, "violin_")
-    boxplot_kw = _extract_kwargs(setup.plot_kwargs, "boxplot_")
+    violin_kw = _extract_kwargs(to_dict(setup.config), "violin_")
+    boxplot_kw = _extract_kwargs(to_dict(setup.config), "boxplot_")
 
     violin_width = get(
         violin_kw,
         :width,
-        setup.bar_width * setup.plot_kwargs[:raincloud_violin_width_mult],
+        setup.bar_width * setup.config.raincloud.violin_width_mult,
     )
     violin_kw[:width] = violin_width
 
-    default_point_alpha = setup.plot_kwargs[:raincloud_point_alpha]
+    default_point_alpha = setup.config.raincloud.point_alpha
     point_alpha = _extract_and_apply_alpha!(violin_kw, group_color, default_point_alpha)
 
     # Track all points for connecting lines
@@ -794,7 +794,7 @@ function _plot_raincloud_custom_simple!(
         side = facing_mode && x_idx == 2 ? :left : :right
 
         # Calculate positions using shared helper function
-        positions = _calculate_raincloud_positions(x_pos, setup.plot_kwargs)
+        positions = _calculate_raincloud_positions(x_pos, setup.config)
         # Determine which side the violin faces based on plot side
         violin_side = side == :right ? :left : :right
         # Use appropriate positions based on side
@@ -813,14 +813,14 @@ function _plot_raincloud_custom_simple!(
             boxplot_kw,
             individual_data,
             violin_side,
-            setup.plot_kwargs;
+            setup.config;
             label = label_for_plot,
         )
 
         all_point_coords[x_idx] = (x = result.points_x, y = result.points_y)
 
         # Plot error bars (if mean is shown)
-        show_mean = get(setup.plot_kwargs, :raincloud_show_mean, true)
+        show_mean = setup.config.raincloud.show_mean
         if errorbars != :none && show_mean
             group_data = _filter_group_data_by_x_level(
                 _group_emmeans_data(
@@ -840,7 +840,7 @@ function _plot_raincloud_custom_simple!(
                     side_positions.points_x,
                     mean_val,
                     distance,
-                    setup.plot_kwargs,
+                    setup.config,
                     errorbars;
                     color = group_color,
                 )
@@ -893,7 +893,7 @@ function _plot_raincloud_custom_simple!(
                 setup.id_col,
                 setup.dv,
             )
-            _plot_connecting_lines!(setup.ax, map_1, map_2, setup.plot_kwargs)
+            _plot_connecting_lines!(setup.ax, map_1, map_2, setup.config)
         end
     end
 end
@@ -950,26 +950,26 @@ function _plot_raincloud_custom!(
     )
 
     # Colors for each y-level
-    color_left = _get_group_color(plot_spec.plot_kwargs, 1)
-    color_right = _get_group_color(plot_spec.plot_kwargs, 2)
+    color_left = _get_group_color(plot_spec.config, 1)
+    color_right = _get_group_color(plot_spec.config, 2)
 
     # Extract kwargs
-    violin_kw_left = _extract_kwargs(setup.plot_kwargs, "violin_")
-    violin_kw_right = _extract_kwargs(setup.plot_kwargs, "violin_")
-    boxplot_kw_left = _extract_kwargs(setup.plot_kwargs, "boxplot_")
-    boxplot_kw_right = _extract_kwargs(setup.plot_kwargs, "boxplot_")
+    violin_kw_left = _extract_kwargs(to_dict(setup.config), "violin_")
+    violin_kw_right = _extract_kwargs(to_dict(setup.config), "violin_")
+    boxplot_kw_left = _extract_kwargs(to_dict(setup.config), "boxplot_")
+    boxplot_kw_right = _extract_kwargs(to_dict(setup.config), "boxplot_")
 
     # Set up violin widths
     violin_width = get(
         violin_kw_left,
         :width,
-        setup.bar_width * setup.plot_kwargs[:raincloud_violin_width_mult],
+        setup.bar_width * setup.config.raincloud.violin_width_mult,
     )
     violin_kw_left[:width] = violin_width
     violin_kw_right[:width] = violin_width
 
     # Handle alpha for violins and store for use in points
-    default_point_alpha = setup.plot_kwargs[:raincloud_point_alpha]
+    default_point_alpha = setup.config.raincloud.point_alpha
     point_alpha = _extract_and_apply_alpha!(violin_kw_left, color_left, default_point_alpha)
     # Ensure consistency - use same alpha from right if present, otherwise keep left's alpha
     if haskey(violin_kw_right, :alpha)
@@ -992,7 +992,7 @@ function _plot_raincloud_custom!(
         isempty(left_y_filtered) && isempty(right_y_filtered) && continue
 
         # Calculate positions centered at this x position
-        positions = _calculate_raincloud_positions(x_pos, setup.plot_kwargs)
+        positions = _calculate_raincloud_positions(x_pos, setup.config)
 
         # Only add labels on the first x-level to avoid duplicate legend entries
         left_label = x_idx == 1 ? string(y_level_left) : nothing
@@ -1013,13 +1013,13 @@ function _plot_raincloud_custom!(
             boxplot_kw_left,
             boxplot_kw_right,
             individual_data,
-            setup.plot_kwargs;
+            setup.config;
             left_label = left_label,
             right_label = right_label,
         )
 
         # Get group data for error bars (if mean is shown)
-        show_mean = get(setup.plot_kwargs, :raincloud_show_mean, true)
+        show_mean = setup.config.raincloud.show_mean
         if errorbars != :none && show_mean
             left_group_data = _filter_group_data_by_x_level(
                 _group_emmeans_data(
@@ -1054,7 +1054,7 @@ function _plot_raincloud_custom!(
                 left_group_data,           # SWAPPED: left data to right position visually  
                 color_right,               # SWAPPED: right color to left position visually
                 color_left,                # SWAPPED: left color to right position visually
-                setup.plot_kwargs,
+                setup.config,
                 errorbars,
             )
         end
@@ -1129,23 +1129,23 @@ function _plot_raincloud_custom_2x2!(
     )
 
     # Get colors for both groups
-    color_group1 = _get_group_color(plot_spec.plot_kwargs, 1)
-    color_group2 = _get_group_color(plot_spec.plot_kwargs, 2)
+    color_group1 = _get_group_color(plot_spec.config, 1)
+    color_group2 = _get_group_color(plot_spec.config, 2)
 
     # Extract kwargs and set up dimensions
-    violin_kw = _extract_kwargs(setup.plot_kwargs, "violin_")
-    boxplot_kw = _extract_kwargs(setup.plot_kwargs, "boxplot_")
+    violin_kw = _extract_kwargs(to_dict(setup.config), "violin_")
+    boxplot_kw = _extract_kwargs(to_dict(setup.config), "boxplot_")
     violin_width = get(
         violin_kw,
         :width,
-        setup.bar_width * setup.plot_kwargs[:raincloud_violin_width_mult],
+        setup.bar_width * setup.config.raincloud.violin_width_mult,
     )
 
-    default_point_alpha = setup.plot_kwargs[:raincloud_point_alpha]
+    default_point_alpha = setup.config.raincloud.point_alpha
     point_alpha = _extract_and_apply_alpha!(violin_kw, nothing, default_point_alpha)
 
     # Calculate positions for all groups
-    positions = _calculate_2x2_positions(1.0, 2.0, setup.plot_kwargs)
+    positions = _calculate_2x2_positions(1.0, 2.0, setup.config)
 
     # Plot all four group/time combinations using helper
     # Labels only on pre (first x-position) to avoid duplicate legend entries
@@ -1158,7 +1158,7 @@ function _plot_raincloud_custom_2x2!(
         violin_width,
         violin_kw,
         boxplot_kw,
-        setup.plot_kwargs,
+        setup.config,
         individual_data,
         :left;
         label = string(y_level_1),
@@ -1172,7 +1172,7 @@ function _plot_raincloud_custom_2x2!(
         violin_width,
         violin_kw,
         boxplot_kw,
-        setup.plot_kwargs,
+        setup.config,
         individual_data,
         :left;
         label = string(y_level_2),
@@ -1186,7 +1186,7 @@ function _plot_raincloud_custom_2x2!(
         violin_width,
         violin_kw,
         boxplot_kw,
-        setup.plot_kwargs,
+        setup.config,
         individual_data,
         :right,
     )
@@ -1199,7 +1199,7 @@ function _plot_raincloud_custom_2x2!(
         violin_width,
         violin_kw,
         boxplot_kw,
-        setup.plot_kwargs,
+        setup.config,
         individual_data,
         :right,
     )
@@ -1233,7 +1233,7 @@ function _plot_raincloud_custom_2x2!(
             setup.ax,
             group1_pre_map,
             group1_post_map,
-            setup.plot_kwargs;
+            setup.config;
             color = color_group1,
         )
 
@@ -1256,7 +1256,7 @@ function _plot_raincloud_custom_2x2!(
             setup.ax,
             group2_pre_map,
             group2_post_map,
-            setup.plot_kwargs;
+            setup.config;
             color = color_group2,
         )
     end

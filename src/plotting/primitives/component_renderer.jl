@@ -22,7 +22,7 @@ struct RaincloudComponentSpec
 end
 
 """
-    _render_raincloud_components!(spec::RaincloudComponentSpec, plot_kwargs, violin_kw, boxplot_kw)
+    _render_raincloud_components!(spec::RaincloudComponentSpec, config, violin_kw, boxplot_kw)
 
 Render raincloud components (violin, boxplot, points) for a single group.
 Handles component ordering based on side (:left or :right) and visibility settings.
@@ -31,7 +31,7 @@ Returns (points_x::Vector{Float64}, points_y::Vector{Float64}, elements::Vector{
 """
 function _render_raincloud_components!(
     spec::RaincloudComponentSpec,
-    plot_kwargs::Dict{Symbol,Any},
+    config::PlotConfig,
     violin_kw::Dict{Symbol,Any},
     boxplot_kw::Dict{Symbol,Any},
 )
@@ -41,9 +41,9 @@ function _render_raincloud_components!(
     points_x = Float64[]
     points_y = Float64[]
 
-    # Get show/hide settings
-    show_violin = get(plot_kwargs, :raincloud_show_violin, true)
-    show_boxplot = get(plot_kwargs, :raincloud_show_boxplot, true)
+    # Get show/hide settings from config
+    show_violin = config.raincloud.show_violin
+    show_boxplot = config.raincloud.show_boxplot
 
     # Determine which component gets the label (first visible component)
     violin_label, boxplot_label = _assign_label(show_violin, show_boxplot, spec.label)
@@ -70,7 +70,7 @@ function _render_raincloud_components!(
             !isnothing(violin_plot) && push!(elements, violin_plot)
 
         elseif component == :boxplot && show_boxplot
-            box_width = spec.violin_width * plot_kwargs[:raincloud_boxplot_width_mult]
+            box_width = spec.violin_width * config.raincloud.boxplot_width_mult
             box_plot = _plot_raincloud_boxplot!(
                 spec.ax,
                 spec.positions.box_x,
@@ -83,7 +83,7 @@ function _render_raincloud_components!(
             !isnothing(box_plot) && push!(elements, box_plot)
 
         elseif component == :points && spec.individual_data ∈ [:points, :connected_points]
-            jitter = _calculate_jitter(spec.violin_width, plot_kwargs)
+            jitter = _calculate_jitter(spec.violin_width, config)
             points_result = _plot_raincloud_points!(
                 spec.ax,
                 spec.positions.points_x,
@@ -91,7 +91,7 @@ function _render_raincloud_components!(
                 spec.color,
                 spec.alpha,
                 jitter,
-                plot_kwargs,
+                config,
             )
             points_x, points_y = points_result[1], points_result[2]
             if length(points_result) >= 3 && !isnothing(points_result[3])

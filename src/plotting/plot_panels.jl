@@ -30,7 +30,7 @@ function _filter_raw_data_for_facet(
 end
 
 """
-    _create_panel_spec(ax, plot_data, facet_spec, row_idx, col_idx, panel_params, plot_kwargs_with_theme)
+    _create_panel_spec(ax, plot_data, facet_spec, row_idx, col_idx, panel_params, config)
 
 Create a PlotPanelSpec for a single panel.
 """
@@ -41,7 +41,7 @@ function _create_panel_spec(
     row_idx::Int,
     col_idx::Int,
     panel_params,
-    plot_kwargs_with_theme::Dict{Symbol,Any},
+    config::PlotConfig,
 )
     facet_emmeans = _filter_for_facet(
         plot_data.interaction_data,
@@ -58,7 +58,7 @@ function _create_panel_spec(
         facet_emmeans,
         plot_data.x_unique,
         panel_params.y_levels_for_spec,
-        plot_kwargs_with_theme,
+        config,
         plot_data.x_factors,
         panel_params.y_factors_for_spec,
         plot_data.effect_factors,
@@ -68,12 +68,12 @@ function _create_panel_spec(
 end
 
 """
-    _set_panel_xticks(ax, x_unique, plot_kwargs)
+    _set_panel_xticks(ax, x_unique, config)
 
 Set x-axis ticks for a panel. Uses custom labels from `axis_xticklabels` if provided.
 """
-function _set_panel_xticks(ax, x_unique::Vector, plot_kwargs::Dict{Symbol,Any})
-    custom_labels = get(plot_kwargs, :axis_xticklabels, nothing)
+function _set_panel_xticks(ax, x_unique::Vector, config::PlotConfig)
+    custom_labels = config.axis.xticklabels
     labels = if !isnothing(custom_labels)
         n_labels = length(custom_labels)
         n_levels = length(x_unique)
@@ -92,7 +92,7 @@ end
 
 """
     _plot_all_panels!(grid, plot_data, facet_spec, plot_type, errorbars, individual_data, 
-                      plot_kwargs_with_theme, panel_params)
+                      config, panel_params)
 
 Plot all panels in the facet grid.
 Mutates the grid axes in place.
@@ -104,7 +104,7 @@ function _plot_all_panels!(
     plot_type::Symbol,
     errorbars::Symbol,
     individual_data::Symbol,
-    plot_kwargs_with_theme::Dict{Symbol,Any},
+    config::PlotConfig,
     panel_params,
 )
     for (row_idx, row_level) in enumerate(facet_spec.row_levels)
@@ -119,7 +119,7 @@ function _plot_all_panels!(
                 row_idx,
                 col_idx,
                 panel_params,
-                plot_kwargs_with_theme,
+                config,
             )
 
             # Plot to panel
@@ -136,7 +136,7 @@ function _plot_all_panels!(
             )
 
             # Set x-axis ticks
-            _set_panel_xticks(ax, plot_data.x_unique, plot_kwargs_with_theme)
+            _set_panel_xticks(ax, plot_data.x_unique, config)
         end
     end
 end

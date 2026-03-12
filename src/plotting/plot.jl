@@ -16,7 +16,7 @@ Plot interaction effects with flexible x-axis, y-axis grouping, and faceting by 
 
 # Plotting Customization
 
-Any parameter from `PLOT_KWARGS` can be passed as a keyword argument to customize the plot.
+Any parameter from the typed kwarg structs can be passed as a keyword argument to customize the plot.
 Common examples include:
 - `linewidth`, `linestyle`, `marker`, `markersize`: Line plot customization (or set via theme palette)
 - `boxplot_color`, `boxplot_strokecolor`, `boxplot_strokewidth`: Boxplot customization
@@ -26,7 +26,7 @@ Common examples include:
 - `figure_size`: Figure size customization
 - `theme`: Theme customization (font sizes, grid colors/visibility, etc.). See `_default_plot_theme()` for defaults.
 
-See `PLOT_KWARGS` for the complete list of customizable parameters.
+See `?PlotConfig` for the complete list of customizable parameters.
 
 # Returns
 A NamedTuple `(fig=Figure, axes=Vector{Axis})` containing the figure and all axes
@@ -87,86 +87,8 @@ function plot_anova(
     )
 end
 
-function plot_anova(
-    result::EmmeansResult;
-    x_grouping,
-    y_grouping = nothing,
-    facet_cols = nothing,
-    facet_rows = nothing,
-    plot_type::Symbol = :line,
-    errorbars::Symbol = :SE,
-    individual_data::Symbol = :none,
-    kwargs...,
-)
-
-    _validate_plot_parameters(plot_type, errorbars, individual_data)
-    errorbar_limits!(result, errorbars)
-    plot_kwargs = _prepare_plot_kwargs(kwargs)
-    plot_theme = _prepare_plot_theme(plot_kwargs)
-    plot_data = _prepare_plot_data(result, x_grouping, y_grouping, facet_cols, facet_rows)
-
-    # Create facet specification
-    facet_spec = _create_facet_spec(
-        facet_cols,
-        facet_rows,
-        plot_data.effect_factors,
-        plot_data.interaction_data,
-    )
-
-    # Determine y-grouping usage and plot_data_y_unique
-    y_faceting =
-        _is_y_faceting(plot_data.y_factors, plot_data.col_factors, plot_data.row_factors)
-    y_unique = _prepare_y_unique(plot_data, y_faceting, plot_kwargs)
-
-    # facet grid
-    grid = _create_facet_grid(
-        facet_spec,
-        plot_kwargs,
-        plot_data.x_factors,
-        plot_data.x_unique,
-        y_unique,
-        y_faceting,
-        plot_theme,
-    )
-
-    # panel parameters
-    plot_kwargs = _add_theme_to_kwargs(plot_kwargs, plot_theme)
-    panel_params =
-        _prepare_panel_spec_parameters(plot_data, y_faceting, plot_kwargs, y_unique)
-
-    # all panels
-    with_theme(plot_theme) do
-        _plot_all_panels!(
-            grid,
-            plot_data,
-            facet_spec,
-            plot_type,
-            errorbars,
-            individual_data,
-            plot_kwargs,
-            panel_params,
-        )
-    end
-
-    # post-processing
-    _apply_global_ylimits!(
-        grid,
-        plot_data,
-        facet_spec,
-        plot_type,
-        errorbars,
-        individual_data,
-        plot_kwargs,
-    )
-    _add_legends_to_grid!(grid, y_unique, plot_data.y_factors, plot_kwargs)
-    _apply_layout_adjustments!(grid, facet_spec)
-
-    return (fig = grid.fig, axes = vec(grid.axes))
-end
-
 """
-Plot to a single panel (faceted or not).
-This is the main dispatcher that calls the appropriate plot function.
+Dispatch a single panel to the appropriate plot function based on plot_type.
 """
 function _plot_to_panel!(
     plot_spec::PlotPanelSpec,
@@ -179,10 +101,8 @@ function _plot_to_panel!(
     col_factors::Union{Nothing,Vector{Symbol}},
     row_factors::Union{Nothing,Vector{Symbol}},
 )
-    # Bundle facet-related arguments into FacetContext to reduce parameter repetition
     facet_ctx = FacetContext(col_factors, col_level, row_factors, row_level, y_faceting)
 
-    # Dispatch to appropriate plot function
     if plot_type ∈ [:line, :bar]
         _plot_emmeans_based!(plot_spec, plot_type, errorbars, facet_ctx, individual_data)
     elseif plot_type == :violin
@@ -198,6 +118,81 @@ function _plot_to_panel!(
     else
         error("Unknown plot type: $plot_type")
     end
+end
+
+function plot_anova(
+    result::EmmeansResult;
+    x_grouping,
+    y_grouping = nothing,
+    facet_cols = nothing,
+    facet_rows = nothing,
+    plot_type::Symbol = :line,
+    errorbars::Symbol = :SE,
+    individual_data::Symbol = :none,
+    kwargs...,
+)
+
+    _validate_plot_parameters(plot_type, errorbars, individual_data)
+    errorbar_limits!(result, errorbars)
+    config = _prepare_plot_kwargs(kwargs)
+    plot_theme = _prepare_plot_theme!(config)
+    plot_data = _prepare_plot_data(result, x_grouping, y_grouping, facet_cols, facet_rows)
+
+    # Create facet specification
+    facet_spec = _create_facet_spec(
+        facet_cols,
+        facet_rows,
+        plot_data.effect_factors,
+        plot_data.interaction_data,
+    )
+
+    # Determine y-grouping usage and plot_data_y_unique
+    y_faceting =
+        _is_y_faceting(plot_data.y_factors, plot_data.col_factors, plot_data.row_factors)
+    y_unique = _prepare_y_unique(plot_data, y_faceting, config)
+
+    # facet grid
+    grid = _create_facet_grid(
+        facet_spec,
+        config,
+        plot_data.x_factors,
+        plot_data.x_unique,
+        y_unique,
+        y_faceting,
+        plot_theme,
+    )
+
+    # panel parameters
+    panel_params = _prepare_panel_spec_parameters(plot_data, y_faceting, config, y_unique)
+
+    # all panels
+    with_theme(plot_theme) do
+        _plot_all_panels!(
+            grid,
+            plot_data,
+            facet_spec,
+            plot_type,
+            errorbars,
+            individual_data,
+            config,
+            panel_params,
+        )
+    end
+
+    # post-processing
+    _apply_global_ylimits!(
+        grid,
+        plot_data,
+        facet_spec,
+        plot_type,
+        errorbars,
+        individual_data,
+        config,
+    )
+    _add_legends_to_grid!(grid, y_unique, plot_data.y_factors, config)
+    _apply_layout_adjustments!(grid, facet_spec)
+
+    return (fig = grid.fig, axes = vec(grid.axes))
 end
 
 """

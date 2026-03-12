@@ -74,6 +74,7 @@ include("output/report.jl")
 include("output/tables.jl")
 
 # Plotting
+include("plotting/plot_kwargs_types.jl")
 include("plotting/plot_types.jl")
 include("plotting/plot_config.jl")
 include("plotting/plot_utils.jl")

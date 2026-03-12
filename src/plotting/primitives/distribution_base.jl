@@ -48,7 +48,7 @@ function _plot_distribution_base!(
         plot_kw = Dict{Symbol,Any}()
         _configure_distribution_plot_kwargs!(
             plot_kw,
-            plot_spec.plot_kwargs,
+            plot_spec.config,
             string(plot_type) * "_",
             plot_idx,
             setup.bar_width,

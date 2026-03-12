@@ -285,7 +285,7 @@ Extract common setup variables from a PlotPanelSpec for use in panel plotting fu
 
 # Returns
 NamedTuple containing: ax, emmeans_data, raw_data, x_factors, y_factors, effect_factors,
-x_unique, y_unique, plot_kwargs, dv, id_col, x_indices, y_indices, n_dodge_groups,
+x_unique, y_unique, config, dv, id_col, x_indices, y_indices, n_dodge_groups,
 dodge_width, bar_width.
 """
 function _extract_plot_setup(
@@ -293,6 +293,8 @@ function _extract_plot_setup(
     y_faceting::Bool,
     plot_type::Union{Symbol,Nothing} = nothing,
 )
+    config = plot_spec.config
+
     # Get indices
     x_indices = [findfirst(==(f), plot_spec.effect_factors) for f in plot_spec.x_factors]
     y_indices =
@@ -306,15 +308,15 @@ function _extract_plot_setup(
     # Auto-calculate dodge_width for bar and boxplot to ensure they don't overlap
     # For other plots, use dodge_width from config
     if plot_type == :bar
-        element_width = plot_spec.plot_kwargs[:bar_width]
+        element_width = config.bar.width
         dodge_width, bar_width =
             _auto_calculate_dodge_width(:bar, element_width, n_dodge_groups)
     elseif plot_type == :boxplot
-        element_width = plot_spec.plot_kwargs[:boxplot_width]
+        element_width = config.boxplot.width
         dodge_width, bar_width =
             _auto_calculate_dodge_width(:boxplot, element_width, n_dodge_groups)
     else
-        dodge_width = plot_spec.plot_kwargs[:dodge_width]
+        dodge_width = config.dodge_width
         bar_width = dodge_width / n_dodge_groups
     end
 
@@ -327,7 +329,7 @@ function _extract_plot_setup(
         effect_factors = plot_spec.effect_factors,
         x_unique = plot_spec.x_levels,
         y_unique = plot_spec.y_levels,
-        plot_kwargs = plot_spec.plot_kwargs,
+        config = config,
         dv = plot_spec.dv,
         id_col = plot_spec.id_col,
         x_indices = x_indices,

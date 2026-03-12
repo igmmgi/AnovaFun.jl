@@ -5,7 +5,7 @@ This file contains functions to apply final touches to plots after all panels ar
 """
 
 """
-    _apply_global_ylimits!(grid, plot_data, facet_spec, plot_type, errorbars, individual_data, plot_kwargs)
+    _apply_global_ylimits!(grid, plot_data, facet_spec, plot_type, errorbars, individual_data, config)
 
 Apply global y-axis limits to all panels in the grid.
 """
@@ -16,17 +16,17 @@ function _apply_global_ylimits!(
     plot_type::Symbol,
     errorbars::Symbol,
     individual_data::Symbol,
-    plot_kwargs::Dict{Symbol,Any},
+    config::PlotConfig,
 )
     global_ylim = something(
-        plot_kwargs[:axis_ylim],
+        config.axis.ylim,
         _calculate_global_ylimits(
             plot_data,
             facet_spec,
             plot_type,
             errorbars,
             individual_data,
-            plot_kwargs,
+            config,
         ),
     )
     !isnothing(global_ylim) && ylims!.(grid.axes, Ref(global_ylim))
@@ -45,15 +45,15 @@ function _apply_layout_adjustments!(grid::FacetGrid, facet_spec::FacetSpec)
 end
 
 """
-    _add_legends_to_grid!(grid, y_unique, y_factors, plot_kwargs)
+    _add_legends_to_grid!(grid, y_unique, y_factors, config)
 
 Add legends to the appropriate axes in the grid based on legend_when_faceting setting.
 If legend_when_faceting is true, adds legend to all panels. Otherwise, only to first panel.
 """
-function _add_legends_to_grid!(grid::FacetGrid, y_unique, y_factors, plot_kwargs)
-    if plot_kwargs[:legend_when_faceting] # legend on each facet
-        _add_legend.(grid.axes, Ref(y_unique), Ref(y_factors), Ref(plot_kwargs))
+function _add_legends_to_grid!(grid::FacetGrid, y_unique, y_factors, config::PlotConfig)
+    if config.legend.when_faceting # legend on each facet
+        _add_legend.(grid.axes, Ref(y_unique), Ref(y_factors), Ref(config))
     else # legend only on first facet
-        _add_legend(grid.axes[1, 1], y_unique, y_factors, plot_kwargs)
+        _add_legend(grid.axes[1, 1], y_unique, y_factors, config)
     end
 end

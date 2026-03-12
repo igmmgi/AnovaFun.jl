@@ -53,16 +53,16 @@ function _plot_single_group!(
     label = !isnothing(y_level) ? string(y_level) : nothing
 
     if plot_type == :line
-        line_kw = _prepare_plot_kwargs(setup.plot_kwargs, "line_", plot_idx, label)
+        line_kw = _prepare_element_kwargs(setup.config, "line_", plot_idx, label)
         main_plot = lines!(setup.ax, x_plot_positions, means; line_kw...)
 
         # Scatter points: no label, but sync visibility with main plot
-        scatter_kw = _prepare_plot_kwargs(setup.plot_kwargs, "line_", plot_idx, nothing)
+        scatter_kw = _prepare_element_kwargs(setup.config, "line_", plot_idx, nothing)
         scatter_plot = scatter!(setup.ax, x_plot_positions, means; scatter_kw...)
         # Sync scatter visibility with line visibility
         _link_visibility!(main_plot, scatter_plot)
     else  # :bar
-        bar_kw = _prepare_plot_kwargs(setup.plot_kwargs, "bar_", plot_idx, label)
+        bar_kw = _prepare_element_kwargs(setup.config, "bar_", plot_idx, label)
         # Set width: use user-provided bar_width if available, otherwise use calculated bar_width
         # When no y_grouping, use the full dodge_width (or user-provided bar_width)
         if !haskey(bar_kw, :width)
@@ -79,7 +79,7 @@ function _plot_single_group!(
             x_plot_positions,
             means,
             distances,
-            setup.plot_kwargs,
+            setup.config,
             errorbars;
             link_to = main_plot,
         )

@@ -13,7 +13,7 @@ struct PlotPanelSpec
     emmeans_data::DataFrame  # Filtered emmeans for this panel
     x_levels::Vector
     y_levels::Union{Nothing,Vector}
-    plot_kwargs::Dict{Symbol,Any}
+    config::PlotConfig
     x_factors::Vector{Symbol}
     y_factors::Vector{Symbol}
     effect_factors::Vector{Symbol}
