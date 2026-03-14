@@ -63,7 +63,7 @@ plot_anova(result, x_grouping = :factor1, y_grouping = :factor2, facet_cols = :f
 
 ```
 
-## Complete Example:
+## Complete Example
 
 ### 2 x 2 Within-Subjects Congruency Sequence Effect (CSE)
 
@@ -120,7 +120,7 @@ result.table # for full anove table
 | CurrentCongruency                      | 1   | 29  | 103.34 | < .001 | \*\*\* | 0.781 |
 | PreviousCongruency × CurrentCongruency | 1   | 29  | 17.68  | < .001 | \*\*\* | 0.379 |
 
-¹: \* = p < .05, ** = p < .01, \*** = p < .001, n.s. = not significant
+¹: \* = p < .05, **= p < .01, \*** = p < .001, n.s. = not significant
 
 #### Step 4: Estimated Marginal Means
 
@@ -321,7 +321,7 @@ If you use AnovaFun.jl in your research, please cite it:
 
 ```bibtex
 @software{mackenzie2026anovafun,
-  author    = {Mackenzie, Ian G. M. and Sonntag, Samuel and Dudschig, Carolin},
+  author    = {Mackenzie, Ian G. and Sonntag, Samuel and Dudschig, Carolin},
   title     = {{AnovaFun.jl}},
   year      = {2026},
   url       = {https://github.com/igmmgi/AnovaFun.jl},
