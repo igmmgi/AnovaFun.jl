@@ -40,8 +40,8 @@ Apply final layout adjustments to ensure equal column/row sizes.
 function _apply_layout_adjustments!(grid::FacetGrid, facet_spec::FacetSpec)
     n_cols = length(facet_spec.col_levels)
     n_rows = length(facet_spec.row_levels)
-    n_cols > 1 && colsize!.(Ref(grid.fig.layout), 1:n_cols, Ref(Relative(1.0 / n_cols)))
-    n_rows > 1 && rowsize!.(Ref(grid.fig.layout), 1:n_rows, Ref(Relative(1.0 / n_rows)))
+    n_cols > 1 && colsize!.(Ref(grid.layout), 1:n_cols, Ref(Relative(1.0 / n_cols)))
+    n_rows > 1 && rowsize!.(Ref(grid.layout), 1:n_rows, Ref(Relative(1.0 / n_rows)))
 end
 
 """

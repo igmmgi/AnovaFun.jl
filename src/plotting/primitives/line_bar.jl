@@ -71,9 +71,12 @@ function _plot_single_group!(
         main_plot = barplot!(setup.ax, x_plot_positions, means; bar_kw...)
     end
 
-    # Error bars: no label, but sync visibility with main plot
+    # Error bars: no label, but sync visibility with main plot.
+    # Pass the explicit group colour so error bars always match their line/bar,
+    # regardless of Makie's internal colour-cycle state (important for plot_anova!).
     if errorbars != :none
         distances = [_get_error_distance(g.row, errorbars) for g in group_data]
+        group_color = _get_group_color(setup.config, plot_idx)
         _plot_errorbars!(
             setup.ax,
             x_plot_positions,
@@ -81,6 +84,7 @@ function _plot_single_group!(
             distances,
             setup.config,
             errorbars;
+            color = group_color,
             link_to = main_plot,
         )
     end

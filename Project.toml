@@ -1,6 +1,6 @@
 name = "AnovaFun"
 uuid = "786f6bac-1c88-4ef5-b24a-5b341b5d6c78"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["igmmgi <ian.mackenzie@uni-tuebingen.de>", "samuel.sonntag@uni-tuebingen.de", "Carolin Dudschig <carolin.dudschig@uni-tuebingen.de>"]
 
 [deps]

@@ -29,7 +29,7 @@ export p, f, sphericity, fstat, tstat
 export m, ci, m_ci
 export paired_ttest, independent_ttest
 export anova_table, emmeans_table, pairwise_table
-export plot_anova, plot_sample_size
+export plot_anova, plot_anova!, plot_sample_size
 
 # types
 export AnovaResult, DesignInfo, EmmeansResult, PairwiseResult, PowerResult, SampleSizeResult
@@ -41,7 +41,7 @@ export factors, all_factors, between_factors, within_factors, n_id, n_effects, d
 export simulate_data, power_analysis, sample_size, within_correlation_matrix
 
 # TODO: is there a better way to do this? But for now, seems to work fine,
-# and as it is such a small dataset other, solutions seem overkill!
+# and as it is such a small dataset, other solutions seem overkill!
 const ExampleData = joinpath(@__DIR__, "..", "test", "test_data", "dat.csv")
 
 # source files

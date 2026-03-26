@@ -22,6 +22,7 @@ plot_counters = Dict{Symbol,Ref{Int}}(
     :raincloud => Ref(0),
     :raincloud_custom => Ref(0),
     :raincloud_custom_2x2 => Ref(0),
+    :mutating => Ref(0),
 )
 
 # Helper function to create and save a plot
@@ -2827,6 +2828,185 @@ end
             @test fig isa Figure
         end
     end
+
+    # ============================================================================
+    # MUTATING VARIANT: plot_anova!
+    # ============================================================================
+    @testset "plot_anova! (Mutating)" begin
+        data, res, em = setup_within_2x2()
+        data_example, res_example, em_example = setup_example_2x2()
+
+        # Helper: create & save a figure produced by one or more plot_anova! calls
+        function save_mutating_plot(test_name, fig)
+            plot_counters[:mutating][] += 1
+            plot_type_dir = joinpath(PLOT_OUTPUT_DIR, "mutating")
+            mkpath(plot_type_dir)
+            filename = @sprintf(
+                "%03d_%s.png",
+                plot_counters[:mutating][],
+                replace(test_name, " " => "_", "(" => "", ")" => ""),
+            )
+            save(joinpath(plot_type_dir, filename), fig)
+            return fig
+        end
+
+        @testset "Single panel into fig[1,1]" begin
+            fig = Figure(size = (800, 600))
+            returned = plot_anova!(
+                fig[1, 1],
+                em,
+                x_grouping = :WF1,
+                y_grouping = :WF2,
+                plot_type = :line,
+            )
+            # plot_anova! should return the parent Figure
+            @test returned === fig
+            save_mutating_plot("single panel line", fig)
+        end
+
+        @testset "Single panel from AnovaResult" begin
+            fig = Figure(size = (800, 600))
+            returned = plot_anova!(
+                fig[1, 1],
+                res,
+                x_grouping = :WF1,
+                y_grouping = :WF2,
+                plot_type = :line,
+            )
+            @test returned === fig
+            save_mutating_plot("single panel from AnovaResult", fig)
+        end
+
+        @testset "Two plots side by side (combined figure)" begin
+            data_mixed, res_mixed, em_mixed = setup_mixed_WB_2x2()
+            fig = Figure(size = (1600, 700))
+            plot_anova!(
+                fig[1, 1],
+                em,
+                x_grouping = :WF1,
+                y_grouping = :WF2,
+                plot_type = :line,
+                axis_ylabel = "DV (within 2×2)",
+            )
+            plot_anova!(
+                fig[1, 2],
+                em_mixed,
+                x_grouping = :WF1,
+                y_grouping = :BF1,
+                plot_type = :line,
+                axis_ylabel = "DV (mixed)",
+            )
+            @test fig isa Figure
+            save_mutating_plot("two plots side by side", fig)
+        end
+
+        @testset "Two plots stacked vertically" begin
+            fig = Figure(size = (800, 1200))
+            plot_anova!(
+                fig[1, 1],
+                em,
+                x_grouping = :WF1,
+                y_grouping = :WF2,
+                plot_type = :line,
+                axis_title = "Line Plot",
+            )
+            plot_anova!(
+                fig[2, 1],
+                em,
+                x_grouping = :WF1,
+                y_grouping = :WF2,
+                plot_type = :bar,
+                axis_title = "Bar Plot",
+            )
+            @test fig isa Figure
+            save_mutating_plot("two plots stacked vertically", fig)
+        end
+
+        @testset "Bar plot into sub-position" begin
+            fig = Figure(size = (800, 600))
+            returned = plot_anova!(
+                fig[1, 1],
+                em,
+                x_grouping = :WF1,
+                y_grouping = :WF2,
+                plot_type = :bar,
+            )
+            @test returned === fig
+            save_mutating_plot("bar plot sub-position", fig)
+        end
+
+        @testset "Main effect only in sub-position" begin
+            fig = Figure(size = (800, 600))
+            returned = plot_anova!(
+                fig[1, 1],
+                em,
+                x_grouping = :WF1,
+                plot_type = :line,
+            )
+            @test returned === fig
+            save_mutating_plot("main effect only sub-position", fig)
+        end
+
+        @testset "With facet cols in sub-position" begin
+            data_2x2x2, res_2x2x2, em_2x2x2 = setup_within_2x2x2()
+            fig = Figure(size = (1200, 600))
+            returned = plot_anova!(
+                fig[1, 1],
+                em_2x2x2,
+                x_grouping = :WF1,
+                y_grouping = :WF2,
+                facet_cols = :WF3,
+                plot_type = :line,
+            )
+            @test returned === fig
+            save_mutating_plot("facet cols sub-position", fig)
+        end
+
+        @testset "Custom axis labels in sub-position" begin
+            fig = Figure(size = (800, 600))
+            returned = plot_anova!(
+                fig[1, 1],
+                em_example,
+                x_grouping = :PreviousCongruency,
+                y_grouping = :CurrentCongruency,
+                plot_type = :line,
+                axis_xlabel = "Previous Congruency",
+                axis_ylabel = "RT (ms)",
+                axis_title = "Congruency Effect",
+                legend_title = "Current",
+            )
+            @test returned === fig
+            save_mutating_plot("custom axis labels sub-position", fig)
+        end
+
+        @testset "No error bars in sub-position" begin
+            fig = Figure(size = (800, 600))
+            returned = plot_anova!(
+                fig[1, 1],
+                em,
+                x_grouping = :WF1,
+                y_grouping = :WF2,
+                plot_type = :line,
+                errorbars = :none,
+            )
+            @test returned === fig
+            save_mutating_plot("no error bars sub-position", fig)
+        end
+
+        @testset "Within-subject error bars in sub-position" begin
+            fig = Figure(size = (800, 600))
+            returned = plot_anova!(
+                fig[1, 1],
+                em,
+                x_grouping = :WF1,
+                y_grouping = :WF2,
+                plot_type = :line,
+                errorbars = :withinSE,
+            )
+            @test returned === fig
+            save_mutating_plot("within SE sub-position", fig)
+        end
+    end  # @testset "plot_anova! (Mutating)"
 end
 
 # Print summary

@@ -200,6 +200,125 @@ function plot_anova(
 end
 
 """
+    plot_anova!(position, result; x_grouping, y_grouping=nothing, ...)
+
+Mutating variant of `plot_anova` that renders into an existing figure position,
+enabling multiple plots to be combined in a single `Figure`.
+
+# Arguments
+- `position`: A grid position in an existing figure, e.g. `fig[1, 1]` or `fig[1, 2]`
+- All remaining arguments are identical to `plot_anova`
+
+# Returns
+The parent `Figure` (already provided by the caller, returned for convenience).
+
+# Examples
+```julia
+fig = Figure(size = (1600, 700))
+plot_anova!(fig[1, 1], result_rt, x_grouping=:pola, y_grouping=:comp,
+            plot_type=:raincloud_custom_2x2, axis_ylabel="RT [ms]")
+plot_anova!(fig[1, 2], result_er, x_grouping=:pola, y_grouping=:comp,
+            plot_type=:raincloud_custom_2x2, axis_ylabel="Error Rate [%]")
+save("combined.png", fig)
+```
+"""
+function plot_anova!(
+    position,
+    result::AnovaResult;
+    x_grouping,
+    y_grouping = nothing,
+    facet_cols = nothing,
+    facet_rows = nothing,
+    plot_type::Symbol = :line,
+    errorbars::Symbol = :SE,
+    individual_data::Symbol = :none,
+    emmeans_level::Float64 = 0.95,
+    emmeans_adjust::Symbol = :none,
+    kwargs...,
+)
+    em_result = emmeans(result; level = emmeans_level, adjust = emmeans_adjust)
+    return plot_anova!(
+        position,
+        em_result;
+        x_grouping = x_grouping,
+        y_grouping = y_grouping,
+        facet_cols = facet_cols,
+        facet_rows = facet_rows,
+        plot_type = plot_type,
+        errorbars = errorbars,
+        individual_data = individual_data,
+        kwargs...,
+    )
+end
+
+function plot_anova!(
+    position,
+    result::EmmeansResult;
+    x_grouping,
+    y_grouping = nothing,
+    facet_cols = nothing,
+    facet_rows = nothing,
+    plot_type::Symbol = :line,
+    errorbars::Symbol = :SE,
+    individual_data::Symbol = :none,
+    kwargs...,
+)
+    _validate_plot_parameters(plot_type, errorbars, individual_data)
+    errorbar_limits!(result, errorbars)
+    config = _prepare_plot_kwargs(kwargs)
+    plot_theme = _prepare_plot_theme!(config)
+    plot_data = _prepare_plot_data(result, x_grouping, y_grouping, facet_cols, facet_rows)
+    _apply_xorder!(plot_data.x_unique, config)
+    facet_spec = _create_facet_spec(
+        facet_cols,
+        facet_rows,
+        plot_data.effect_factors,
+        plot_data.interaction_data,
+    )
+    y_faceting =
+        _is_y_faceting(plot_data.y_factors, plot_data.col_factors, plot_data.row_factors)
+    y_unique = _prepare_y_unique(plot_data, y_faceting, config)
+
+    grid = _create_facet_grid(
+        facet_spec,
+        config,
+        plot_data.x_factors,
+        plot_data.x_unique,
+        y_unique,
+        y_faceting,
+        plot_theme;
+        position = position,
+    )
+
+    panel_params = _prepare_panel_spec_parameters(plot_data, y_faceting, config, y_unique)
+    with_theme(plot_theme) do
+        _plot_all_panels!(
+            grid,
+            plot_data,
+            facet_spec,
+            plot_type,
+            errorbars,
+            individual_data,
+            config,
+            panel_params,
+        )
+    end
+    _apply_global_ylimits!(
+        grid,
+        plot_data,
+        facet_spec,
+        plot_type,
+        errorbars,
+        individual_data,
+        config,
+    )
+    _add_legends_to_grid!(grid, y_unique, plot_data.y_factors, config)
+    _apply_layout_adjustments!(grid, facet_spec)
+
+    return grid.fig
+end
+
+"""
     plot_sample_size(result::SampleSizeResult; target_power=nothing, kwargs...)
 
 Plot power curves for sample size analysis.

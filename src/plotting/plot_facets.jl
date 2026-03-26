@@ -162,7 +162,7 @@ Create all axes for the facet grid.
 Mutates the axes matrix in place.
 """
 function _create_facet_axes!(
-    fig,
+    layout,
     axes::Matrix{Axis},
     spec::FacetSpec,
     axis_kw,
@@ -195,7 +195,7 @@ function _create_facet_axes!(
                 )
 
                 # Create axis
-                ax = Axis(fig[row_idx, col_idx]; axis_kw_panel...)
+                ax = Axis(layout[row_idx, col_idx]; axis_kw_panel...)
 
                 # Set x-axis limits early to prevent auto-scaling
                 if isnothing(xlim_val)
@@ -222,7 +222,7 @@ function _create_facet_axes!(
                     row_level = spec.row_levels[row_idx]
                     row_label = "$(join(string.(spec.row_factors), " × ")) = $row_level"
                     Label(
-                        fig[row_idx, n_cols+1],
+                        layout[row_idx, n_cols+1],
                         row_label,
                         rotation = 3 * pi / 2,  # 270 degrees (vertical)
                         halign = :left,
@@ -248,28 +248,35 @@ function _create_facet_grid(
     x_unique::Vector{String},
     y_unique,
     y_faceting::Bool,
-    plot_theme,
+    plot_theme;
+    position = nothing,
 )
-    # Build figure kwargs from config
-    figure_kw = to_makie_dict(config.figure)
-
     # Add extra column for row facet labels if needed (they go on the right)
     has_row_facets = !isnothing(spec.row_factors) && !isempty(spec.row_factors)
     n_cols = length(spec.col_levels)
     n_rows = length(spec.row_levels)
 
-    # Set default size if not specified
-    if !haskey(figure_kw, :size) || isnothing(figure_kw[:size])
-        figure_kw[:size] = (
-            config.layout.panel_width * n_cols,
-            config.layout.panel_height * n_rows,
-        )
-    end
-
-    # Create figure with theme applied
-    fig = with_theme(plot_theme) do
-        filter!(kv -> kv.first ∈ _VALID_FIGURE_ATTRS, figure_kw)
-        Figure(; figure_kw...)
+    # Create figure and layout
+    fig, layout = if isnothing(position)
+        # Build figure kwargs from config
+        figure_kw = to_makie_dict(config.figure)
+        # Set default size if not specified
+        if !haskey(figure_kw, :size) || isnothing(figure_kw[:size])
+            figure_kw[:size] = (
+                config.layout.panel_width * n_cols,
+                config.layout.panel_height * n_rows,
+            )
+        end
+        f = with_theme(plot_theme) do
+            filter!(kv -> kv.first ∈ _VALID_FIGURE_ATTRS, figure_kw)
+            Figure(; figure_kw...)
+        end
+        f, f.layout
+    else
+        # Embed into an existing figure at the given grid position
+        f = position.layout.parent
+        gl = GridLayout(position)
+        f, gl
     end
 
     # Add spacing between rows and columns
@@ -277,8 +284,8 @@ function _create_facet_grid(
         has_row_facets ? config.layout.row_gap_with_facets :
         config.layout.row_gap
     col_gap = config.layout.col_gap
-    rowgap!(fig.layout, row_gap)
-    colgap!(fig.layout, col_gap)
+    rowgap!(layout, row_gap)
+    colgap!(layout, col_gap)
 
     # Pre-compute axis kwargs from config
     axis_kw = to_makie_dict(config.axis)
@@ -300,7 +307,7 @@ function _create_facet_grid(
 
     # Create axes for each facet
     _create_facet_axes!(
-        fig,
+        layout,
         axes,
         spec,
         axis_kw,
@@ -317,7 +324,7 @@ function _create_facet_grid(
     # Link axes (x and y limits should be linked)
     linkaxes!.(Ref(axes[1, 1]), axes)
 
-    return FacetGrid(fig, axes, spec)
+    return FacetGrid(fig, layout, axes, spec)
 end
 
 # Helper to add KDE extent estimates to y_values

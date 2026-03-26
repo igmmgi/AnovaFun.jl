@@ -38,6 +38,7 @@ Manages a grid of axes for faceted plots.
 """
 struct FacetGrid
     fig::Figure
+    layout  # GridLayout where axes are placed (fig.layout for standalone, sub-layout when embedded)
     axes::Matrix{Axis}
     spec::FacetSpec
 end
