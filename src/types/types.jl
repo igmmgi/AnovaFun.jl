@@ -264,7 +264,7 @@ function Base.show(io::IO, ::MIME"text/plain", r::AnovaResult)
         println(io, "  Within (levels): ", within_str)
     end
     println(io)
-    anova_table(r)
+    anova_table(r; io=io)
 end
 
 # Compact printing (for arrays, etc.)
@@ -354,7 +354,7 @@ struct PairwiseResult
 end
 
 # Custom show method for PairwiseResult
-Base.show(io::IO, ::MIME"text/plain", pw::PairwiseResult) = pairwise_table(pw)
+Base.show(io::IO, ::MIME"text/plain", pw::PairwiseResult) = pairwise_table(pw; io=io)
 
 # Compact printing (for arrays, etc.)
 Base.show(io::IO, pw::PairwiseResult) = print(io, "PairwiseResult")
