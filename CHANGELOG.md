@@ -9,16 +9,13 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - **Breaking:** CairoMakie is no longer a dependency. Load a Makie backend yourself (`using CairoMakie` or `using GLMakie`) to display or save plots.
 - Faster package load, as CairoMakie is no longer loaded with AnovaFun.
+- Updated `show` methods for result types.
 - Widened `CSV` compat to `0.10, 1.1`.
 
 ### Added
 
 - README note on loading a Makie backend.
 - This changelog.
-
-## [0.4.1] - 2026-08-10
-
-- Updated `show` methods for result types.
 
 ## [0.3.0] - 2026-03-12
 
