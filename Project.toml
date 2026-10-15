@@ -1,11 +1,10 @@
 name = "AnovaFun"
 uuid = "786f6bac-1c88-4ef5-b24a-5b341b5d6c78"
-version = "0.4.1"
+version = "0.5.0"
 authors = ["igmmgi <ian.mackenzie@uni-tuebingen.de>", "samuel.sonntag@uni-tuebingen.de", "Carolin Dudschig <carolin.dudschig@uni-tuebingen.de>"]
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
-CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 GLM = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
@@ -21,8 +20,7 @@ StatsModels = "3eaba693-59b7-5ba5-a881-562e759f1c8d"
 
 [compat]
 julia = "1.10"
-CSV = "0.10"
-CairoMakie = "0.15"
+CSV = "0.10, 1.1"
 DataFrames = "1.8"
 Distributions = "0.25"
 GLM = "1.9"
@@ -38,10 +36,11 @@ StatsModels = "0.7"
 
 [extras]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 DocumenterTools = "35a29f4d-8980-5a13-9543-d66fff28ecb8"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 docs = ["Documenter", "DocumenterTools"]
-test = ["Test", "CSV"]
+test = ["Test", "CSV", "CairoMakie"]

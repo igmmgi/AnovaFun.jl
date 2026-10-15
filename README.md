@@ -34,6 +34,18 @@ Pkg.add("AnovaFun")
 Pkg.add(url="https://github.com/igmmgi/AnovaFun.jl")
 ```
 
+### Plotting backend
+
+AnovaFun builds its plots with [Makie](https://docs.makie.org) but does **not** load a backend itself. To display or save plots, install and load a Makie backend before plotting:
+
+```julia
+using CairoMakie   # static, publication-quality output (PNG/SVG/PDF)
+# or
+using GLMakie      # interactive windows 
+```
+
+Without a backend loaded, `plot_anova` will still return a `Figure`, but it cannot be displayed or saved.
+
 ## Quick Reference
 
 ### Basic ANOVA Syntax
